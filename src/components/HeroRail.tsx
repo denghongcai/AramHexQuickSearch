@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { heroQuery, useHeroes, type HeroRow } from '@/lib/api'
@@ -12,10 +12,13 @@ const TIER_CLASS: Record<string, string> = {
   D: 'bg-tier-d text-ink',
 }
 
-function HeroItem({ hero }: { hero: HeroRow }) {
+/** memo：hero 引用来自 React Query 缓存（稳定），导航时只有 active 布尔变化的行重渲染 */
+const HeroItem = memo(function HeroItem({ hero }: { hero: HeroRow }) {
   const queryClient = useQueryClient()
-  const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const active = pathname === `/hero/${hero.id}`
+  // 布尔 selector：导航时只让受影响的 2 行（旧高亮 + 新高亮）重渲染，而非全列表
+  const active = useRouterState({
+    select: (s) => s.location.pathname === `/hero/${hero.id}`,
+  })
   // hover / 聚焦时预取详情，点进详情页即秒开
   const prefetch = () => void queryClient.prefetchQuery(heroQuery(hero.id))
 
@@ -58,7 +61,7 @@ function HeroItem({ hero }: { hero: HeroRow }) {
       </Link>
     </li>
   )
-}
+})
 
 /**
  * 英雄榜栏：搜索框 + 英雄列表。
