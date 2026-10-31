@@ -238,7 +238,9 @@ describe('aramhex', () => {
 
 **Files:** `src/routes/Overview.tsx`
 
-内容（桌面一屏放下）：meta 卡（patch/快照时间/有效对局数/英雄数）、Tier 分布条（S~D 人数）、Top10 英雄迷你榜、Top10 海克斯迷你榜（链接 `/augments`）、流派家族概览（families.json：每族 top3 装备+覆盖 build 数）。全部 `grid` 多列铺满。
+内容（桌面一屏放下）：meta 卡（patch/快照时间/有效对局数/英雄数）、Tier 分布条（S~D 人数）、Top10 英雄迷你榜、Top10 海克斯迷你榜（链接 `/augments`）、流派家族概览。全部 `grid` 多列铺满。
+
+> **Task 6 实测注记（2026-11-01）**：装备共现聚类在真实数据上产出 54 家族（7 个多件 + 47 个单件；详见 `scripts/lib/haidou-builds.mjs` 模块头），海斗的 8 桶是 build 级标签而非物品聚类产物。**总览页只渲染多件家族**（`items.length ≥ 2`，按 buildCount 降序 top N），单件家族不进总览；海斗式流派分组直接用 `builds[].key`（8 种，解析器已带出）。
 
 **Commit**
 
