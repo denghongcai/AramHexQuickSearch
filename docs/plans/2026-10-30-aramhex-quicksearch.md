@@ -240,6 +240,8 @@ describe('aramhex', () => {
 
 内容（桌面一屏放下）：meta 卡（patch/快照时间/有效对局数/英雄数）、Tier 分布条（S~D 人数）、Top10 英雄迷你榜、Top10 海克斯迷你榜（链接 `/augments`）、流派家族概览。全部 `grid` 多列铺满。
 
+> **移动端 IA 决策（2026-11-01，Task 8 审查结论）**：Task 8 的移动端 `/` 只渲染 HeroRail、隐藏 `<main>`（`hidden lg:block`），BottomNav 无总览入口——若不处理，总览内容在移动端不可达。**决策：不新增路由/标签**。移动端 `/` 顶部渲染精简总览条（patch/对局数/tier 分布横条，`<details>` 可折叠），其下英雄列表；桌面 `/` 右栏仍为完整总览页。OverviewPage 需同时提供两种形态（桌面全量 grid / 移动端精简条），BottomNav 保持 3 tab。
+
 > **Task 6 实测注记（2026-11-01）**：装备共现聚类在真实数据上产出 54 家族（7 个多件 + 47 个单件；详见 `scripts/lib/haidou-builds.mjs` 模块头），海斗的 8 桶是 build 级标签而非物品聚类产物。**总览页只渲染多件家族**（`items.length ≥ 2`，按 buildCount 降序 top N），单件家族不进总览；海斗式流派分组直接用 `builds[].key`（8 种，解析器已带出）。
 
 **Commit**
