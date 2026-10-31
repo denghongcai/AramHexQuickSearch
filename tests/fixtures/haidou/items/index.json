@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "site": "haidou-fixture",
+  "items": [
+    {
+      "id": 3032,
+      "name": "育恩塔尔荒野箭",
+      "icon": "assets/resources/items/3032.fixture.webp",
+      "tier": "S",
+      "sampleCount": 900,
+      "winRate": 0.6,
+      "winRatePercent": 60,
+      "pickRate": 0.05,
+      "pickRatePercent": 5,
+      "rank": 1
+    },
+    {
+      "id": 6672,
+      "name": "海妖杀手",
+      "icon": "assets/resources/items/6672.fixture.webp",
+      "tier": "S",
+      "sampleCount": 850,
+      "winRate": 0.59,
+      "winRatePercent": 59,
+      "pickRate": 0.048,
+      "pickRatePercent": 4.8,
+      "rank": 2
+    },
+    {
+      "id": 3072,
+      "name": "血手",
+      "icon": "assets/resources/items/3072.fixture.webp",
+      "tier": "A",
+      "sampleCount": 800,
+      "winRate": 0.58,
+      "winRatePercent": 58,
+      "pickRate": 0.045,
+      "pickRatePercent": 4.5,
+      "rank": 3
+    },
+    {
+      "id": 3089,
+      "name": "灭世者的死亡之帽",
+      "icon": "assets/resources/items/3089.fixture.webp",
+      "tier": "S",
+      "sampleCount": 780,
+      "winRate": 0.58,
+      "winRatePercent": 58,
+      "pickRate": 0.044,
+      "pickRatePercent": 4.4,
+      "rank": 4
+    },
+    {
+      "id": 3157,
+      "name": "中娅沙漏",
+      "icon": "assets/resources/items/3157.fixture.webp",
+      "tier": "A",
+      "sampleCount": 760,
+      "winRate": 0.57,
+      "winRatePercent": 57,
+      "pickRate": 0.043,
+      "pickRatePercent": 4.3,
+      "rank": 5
+    },
+    {
+      "id": 4645,
+      "name": "星蚀驱驰",
+      "icon": "assets/resources/items/4645.fixture.webp",
+      "tier": "A",
+      "sampleCount": 740,
+      "winRate": 0.57,
+      "winRatePercent": 57,
+      "pickRate": 0.042,
+      "pickRatePercent": 4.2,
+      "rank": 6
+    },
+    {
+      "id": 3065,
+      "name": "振奋盔甲",
+      "icon": "assets/resources/items/3065.fixture.webp",
+      "tier": "A",
+      "sampleCount": 700,
+      "winRate": 0.56,
+      "winRatePercent": 56,
+      "pickRate": 0.04,
+      "pickRatePercent": 4,
+      "rank": 7
+    },
+    {
+      "id": 3742,
+      "name": "兰顿之兆",
+      "icon": "assets/resources/items/3742.fixture.webp",
+      "tier": "B",
+      "sampleCount": 680,
+      "winRate": 0.55,
+      "winRatePercent": 55,
+      "pickRate": 0.038,
+      "pickRatePercent": 3.8,
+      "rank": 8
+    },
+    {
+      "id": 1036,
+      "name": "长剑",
+      "icon": "assets/resources/items/1036.fixture.webp",
+      "tier": "B",
+      "sampleCount": 660,
+      "winRate": 0.54,
+      "winRatePercent": 54,
+      "pickRate": 0.037,
+      "pickRatePercent": 3.7,
+      "rank": 9
+    },
+    {
+      "id": 1056,
+      "name": "多兰之戒",
+      "icon": "assets/resources/items/1056.fixture.webp",
+      "tier": "B",
+      "sampleCount": 640,
+      "winRate": 0.53,
+      "winRatePercent": 53,
+      "pickRate": 0.036,
+      "pickRatePercent": 3.6,
+      "rank": 10
+    }
+  ]
+}

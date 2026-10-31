@@ -1,0 +1,247 @@
+{
+  "schemaVersion": 1,
+  "hero": {
+    "id": 9002,
+    "slug": "demo-annie",
+    "name": "演示·安妮",
+    "title": "测试数据之影",
+    "icon": ""
+  },
+  "defaultBuildKey": "ap",
+  "builds": [
+    {
+      "key": "crit",
+      "name": "暴击流",
+      "sampleCount": 500,
+      "lowSampleWarning": false,
+      "pickRate": 0.5,
+      "winRate": 0.58,
+      "coreProfile": {
+        "sampleCount": 180,
+        "pickRate": 0.18,
+        "winRate": 0.62,
+        "itemIds": [3072, 3032, 6672],
+        "selectionMinPickRate": 0.05
+      },
+      "starter": {
+        "sampleCount": 300,
+        "pickRate": 0.6,
+        "winRate": 0.57
+      },
+      "skillOrder": "Q>W>E",
+      "items": {
+        "starter": [
+          { "id": 1055, "name": "多兰之刃", "icon": "assets/resources/items/1055.fixture.webp" }
+        ],
+        "core": [
+          {
+            "id": 3072,
+            "name": "血手",
+            "sampleCount": 180,
+            "pickRate": 0.18,
+            "winRate": 0.62,
+            "source": "coreProfile",
+            "icon": "assets/resources/items/3072.fixture.webp"
+          },
+          {
+            "id": 3032,
+            "name": "育恩塔尔荒野箭",
+            "sampleCount": 180,
+            "pickRate": 0.18,
+            "winRate": 0.62,
+            "source": "coreProfile",
+            "icon": "assets/resources/items/3032.fixture.webp"
+          },
+          {
+            "id": 6672,
+            "name": "海妖杀手",
+            "sampleCount": 180,
+            "pickRate": 0.18,
+            "winRate": 0.62,
+            "source": "coreProfile",
+            "icon": "assets/resources/items/6672.fixture.webp"
+          }
+        ],
+        "recommended": [
+          {
+            "id": 3072,
+            "name": "血手",
+            "sampleCount": 180,
+            "pickRate": 0.18,
+            "winRate": 0.62,
+            "source": "coreProfile",
+            "icon": "assets/resources/items/3072.fixture.webp"
+          },
+          {
+            "id": 3006,
+            "name": "狂战士胫甲",
+            "sampleCount": 150,
+            "pickRate": 0.15,
+            "winRate": 0.6,
+            "source": "routeBoots",
+            "icon": "assets/resources/items/3006.fixture.webp"
+          }
+        ]
+      }
+    },
+    {
+      "key": "ap",
+      "name": "法术流",
+      "sampleCount": 400,
+      "lowSampleWarning": false,
+      "pickRate": 0.4,
+      "winRate": 0.56,
+      "coreProfile": {
+        "sampleCount": 160,
+        "pickRate": 0.16,
+        "winRate": 0.61,
+        "itemIds": [4645, 3157, 3089],
+        "selectionMinPickRate": 0.05
+      },
+      "starter": {
+        "sampleCount": 250,
+        "pickRate": 0.62,
+        "winRate": 0.55
+      },
+      "skillOrder": "W>Q>E",
+      "items": {
+        "starter": [
+          { "id": 1056, "name": "多兰之戒", "icon": "assets/resources/items/1056.fixture.webp" }
+        ],
+        "core": [
+          {
+            "id": 4645,
+            "name": "星蚀驱驰",
+            "sampleCount": 160,
+            "pickRate": 0.16,
+            "winRate": 0.61,
+            "source": "coreProfile",
+            "icon": "assets/resources/items/4645.fixture.webp"
+          },
+          {
+            "id": 3157,
+            "name": "中娅沙漏",
+            "sampleCount": 160,
+            "pickRate": 0.16,
+            "winRate": 0.61,
+            "source": "coreProfile",
+            "icon": "assets/resources/items/3157.fixture.webp"
+          },
+          {
+            "id": 3089,
+            "name": "灭世者的死亡之帽",
+            "sampleCount": 160,
+            "pickRate": 0.16,
+            "winRate": 0.61,
+            "source": "coreProfile",
+            "icon": "assets/resources/items/3089.fixture.webp"
+          }
+        ],
+        "recommended": [
+          {
+            "id": 4645,
+            "name": "星蚀驱驰",
+            "sampleCount": 160,
+            "pickRate": 0.16,
+            "winRate": 0.61,
+            "source": "coreProfile",
+            "icon": "assets/resources/items/4645.fixture.webp"
+          }
+        ]
+      }
+    },
+    {
+      "key": "tank",
+      "name": "坦克流",
+      "sampleCount": 200,
+      "lowSampleWarning": false,
+      "pickRate": 0.2,
+      "winRate": 0.5,
+      "coreProfile": {
+        "sampleCount": 80,
+        "pickRate": 0.08,
+        "winRate": 0.53,
+        "itemIds": [3742, 3065, 1043],
+        "selectionMinPickRate": 0.05
+      },
+      "starter": {
+        "sampleCount": 100,
+        "pickRate": 0.5,
+        "winRate": 0.49
+      },
+      "skillOrder": "E>W>Q",
+      "items": {
+        "starter": [
+          { "id": 1054, "name": "多兰之盾", "icon": "assets/resources/items/1054.fixture.webp" }
+        ],
+        "core": [
+          {
+            "id": 3742,
+            "name": "兰顿之兆",
+            "sampleCount": 80,
+            "pickRate": 0.08,
+            "winRate": 0.53,
+            "source": "coreProfile",
+            "icon": "assets/resources/items/3742.fixture.webp"
+          },
+          {
+            "id": 3065,
+            "name": "振奋盔甲",
+            "sampleCount": 80,
+            "pickRate": 0.08,
+            "winRate": 0.53,
+            "source": "coreProfile",
+            "icon": "assets/resources/items/3065.fixture.webp"
+          },
+          {
+            "id": 1043,
+            "name": "无用大棒",
+            "sampleCount": 80,
+            "pickRate": 0.08,
+            "winRate": 0.53,
+            "source": "coreProfile",
+            "icon": "assets/resources/items/1043.fixture.webp"
+          }
+        ],
+        "recommended": [
+          {
+            "id": 3742,
+            "name": "兰顿之兆",
+            "sampleCount": 80,
+            "pickRate": 0.08,
+            "winRate": 0.53,
+            "source": "coreProfile",
+            "icon": "assets/resources/items/3742.fixture.webp"
+          }
+        ]
+      }
+    },
+    {
+      "key": "situational",
+      "name": "娱乐局",
+      "sampleCount": 20,
+      "lowSampleWarning": true,
+      "pickRate": 0.02,
+      "winRate": 0.4,
+      "starter": {
+        "sampleCount": 10,
+        "pickRate": 0.5,
+        "winRate": 0.4
+      },
+      "skillOrder": "W>Q>E",
+      "items": {
+        "starter": [],
+        "core": [],
+        "recommended": []
+      }
+    }
+  ],
+  "gameplay": {
+    "status": "reviewed",
+    "locked": false,
+    "summary": [
+      "演示安妮第一条。",
+      "演示安妮第二条。"
+    ]
+  }
+}
