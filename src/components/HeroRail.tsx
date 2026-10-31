@@ -76,6 +76,7 @@ export function HeroRail({ className = '' }: { className?: string }) {
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
+          aria-label="搜索英雄 / 拼音 / 别名"
           placeholder="搜索英雄 / 拼音 / 别名"
           className="w-full rounded-lg border border-edge bg-ink px-3 py-2 text-sm outline-none placeholder:text-muted focus:border-accent"
         />
@@ -90,7 +91,7 @@ export function HeroRail({ className = '' }: { className?: string }) {
       ) : isError ? (
         <p className="p-4 text-sm text-tier-d">英雄榜加载失败，请刷新重试。</p>
       ) : (
-        <ul className="min-h-0 flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:overflow-y-auto lg:pb-2">
+        <ul className="min-h-0 flex-1 pb-(--bottom-nav-h) lg:overflow-y-auto lg:pb-2">
           {(data?.heroes ?? []).map((hero) => (
             <HeroItem key={hero.id} hero={hero} />
           ))}

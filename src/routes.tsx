@@ -27,8 +27,9 @@ function RootLayout() {
         <main
           className={[
             'min-h-0 min-w-0 flex-1 lg:overflow-y-auto',
-            // 移动端给固定底导航留出高度
-            'pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:pb-0',
+            // 移动端给固定底导航留出高度（--bottom-nav-h 见 styles.css）
+            'pb-(--bottom-nav-h) lg:pb-0',
+            // hidden 需在 flex 之后生成才生效，见构建产物层序——勿调换 HeroRail 基础类里的 flex
             onHome ? 'hidden lg:block' : 'block',
           ].join(' ')}
         >

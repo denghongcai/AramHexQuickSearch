@@ -16,6 +16,9 @@
   --color-rar-gold: #efc54a;
   --color-rar-silver: #aebcc3;
   --font-tnum: ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* 底部导航（<lg）总高度：内容高 + iOS 安全区，内容区用它预留 padding */
+  --bottom-nav-h: calc(3.5rem + env(safe-area-inset-bottom));
 }
 
 /* 深色唯一主题，不做切换 */

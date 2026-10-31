@@ -15,7 +15,7 @@ export function BottomNav() {
           key={tab.to}
           to={tab.to}
           activeOptions={{ exact: tab.exact }}
-          className="flex flex-col items-center py-2.5 text-xs"
+          className="flex flex-col items-center py-3 text-xs"
           activeProps={{ className: 'text-accent' }}
           inactiveProps={{ className: 'text-muted' }}
         >
