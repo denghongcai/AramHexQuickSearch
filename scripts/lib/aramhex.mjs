@@ -22,6 +22,7 @@ const NORMAL_PATCH_RE = /^\d+(?:\.\d+)+$/
 
 /**
  * 点分数字版本号的语义比较（16.9 < 16.10，不是字符串排序）。
+ * 仅数字段：段内出现非数字时抛错，避免 NaN 比较悄悄给出不稳定顺序。
  * @param {string} a
  * @param {string} b
  * @returns {-1|0|1}
@@ -33,6 +34,9 @@ export function compareVersions(a, b) {
   for (let i = 0; i < len; i++) {
     const x = Number(as[i] ?? 0)
     const y = Number(bs[i] ?? 0)
+    if (Number.isNaN(x) || Number.isNaN(y)) {
+      throw new Error(`compareVersions 仅支持数字段，收到: ${a} vs ${b}`)
+    }
     if (x !== y) return x < y ? -1 : 1
   }
   return 0
@@ -50,7 +54,17 @@ export function latestPatch(patchDirNames) {
 }
 
 function readJson(file) {
-  return JSON.parse(fs.readFileSync(file, 'utf8'))
+  let raw
+  try {
+    raw = fs.readFileSync(file, 'utf8')
+  } catch (err) {
+    throw new Error(`读取文件失败: ${file}（${err.message}）`, { cause: err })
+  }
+  try {
+    return JSON.parse(raw)
+  } catch (err) {
+    throw new Error(`解析 JSON 失败: ${file}（${err.message}）`, { cause: err })
+  }
 }
 
 /**
@@ -103,6 +117,20 @@ export function parseAramhex(aramhexDir = ARAMHEX_DIR) {
     }))
     .sort((a, b) => b.winRate - a.winRate || a.id - b.id)
 
+  // 防静默脏数据：缺 win_rate 的英雄会变 NaN，排序后仍然通过，最终序列化成
+  // "winRate":null 混进产物。这里直接构建期报错，指明英雄 id。
+  if (heroes.length === 0) {
+    throw new Error(`heroes.json 没有英雄数据: ${path.join(normalDir, 'heroes.json')}`)
+  }
+  for (const h of heroes) {
+    const badFields = ['games', 'winRate', 'pickRate'].filter((f) => !Number.isFinite(h[f]))
+    if (badFields.length > 0) {
+      throw new Error(
+        `heroes.json 数值字段非法: id=${h.id} 字段=${badFields.join(',')}（${path.join(normalDir, 'heroes.json')}）`,
+      )
+    }
+  }
+
   const augments = {}
   for (const [augId, a] of Object.entries(augmentsRaw)) {
     augments[Number(augId)] = { name: a.name, rarity: a.rarity }
@@ -136,7 +164,11 @@ export function parseAramhex(aramhexDir = ARAMHEX_DIR) {
   const bands = {}
   for (const band of BAND_KEYS) {
     const file = path.join(normalDir, 'bands', band, 'heroes.json')
-    if (!fs.existsSync(file)) continue
+    if (!fs.existsSync(file)) {
+      // 跳过 bands/high 属预期（与 top 逐字节相同）；casual/mid/top 缺失则要暴露出来。
+      console.warn(`[aramhex] bands/${band}/heroes.json 缺失，返回值中 bands.${band} 为 undefined（${normalDir}）`)
+      continue
+    }
     const map = {}
     for (const [heroId, h] of Object.entries(readJson(file))) {
       map[Number(heroId)] = { winRate: Number(h.win_rate), games: Number(h.games) }

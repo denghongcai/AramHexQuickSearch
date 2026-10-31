@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 
 import { describe, expect, it } from 'vitest'
@@ -16,6 +18,11 @@ describe('compareVersions 语义比较', () => {
     expect(compareVersions('16.21', '16.21')).toBe(0)
     expect(compareVersions('16.21', '16.20')).toBe(1)
     expect(compareVersions('16.20', '16.21')).toBe(-1)
+  })
+
+  it('仅数字段：非数字段抛错而不是 NaN 假排序', () => {
+    expect(() => compareVersions('16.a', '16.1')).toThrow(/仅支持数字段/)
+    expect(() => compareVersions('16.21', 'pbe')).toThrow(/仅支持数字段/)
   })
 })
 
@@ -89,14 +96,60 @@ describe('parseAramhex（mini fixture）', () => {
     expect(parsed.spells[22]).toHaveLength(1)
   })
 
-  it('bands 合并 casual/mid/top 到英雄（跳过 high）', () => {
+  it('bands 分段合并为 band→heroId 映射（跳过 high）', () => {
     expect(parsed.bands.casual[157]).toEqual({ winRate: 0.57, games: 2200000 })
     expect(parsed.bands.mid[157]).toEqual({ winRate: 0.6, games: 300000 })
     expect(parsed.bands.top[157]).toEqual({ winRate: 0.62, games: 150000 })
+    // fixture 里 bands/high/heroes.json 已存在（与 top 相同），解析器必须仍然无视它
     expect(parsed.bands.high).toBeUndefined()
   })
 
   it('patches 目录缺失时抛出可读错误', () => {
     expect(() => parseAramhex(path.join(FIXTURE_DIR, 'no-such-dir'))).toThrow(/patches/)
+  })
+
+  it('只有 pbe 目录（无正式版本）时抛出无正式版本错误', () => {
+    expect(() => parseAramhex(path.join(FIXTURE_DIR, 'patches-only-pbe'))).toThrow(/没有任何正式版本/)
+  })
+})
+
+describe('损坏数据防护（构建期报错，不静默带病输出）', () => {
+  /** 把 fixture 复制进临时目录后做破坏，再交给 parseAramhex；结束后清理。 */
+  function parseBrokenFixture(mutate) {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aramhex-test-'))
+    try {
+      fs.cpSync(FIXTURE_DIR, tmp, { recursive: true })
+      mutate(tmp)
+      return parseAramhex(tmp)
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  }
+
+  it('heroes.json 截断时报错并指明文件路径（不再是匿名 SyntaxError）', () => {
+    expect(() =>
+      parseBrokenFixture((tmp) => {
+        fs.writeFileSync(path.join(tmp, 'patches/16.21/normal/heroes.json'), '{"157": {"name": "亚索"')
+      }),
+    ).toThrow(/解析 JSON 失败: .*heroes\.json/)
+  })
+
+  it('英雄缺 win_rate 时报错并带上英雄 id（防 winRate:null 混进产物）', () => {
+    expect(() =>
+      parseBrokenFixture((tmp) => {
+        const heroesFile = path.join(tmp, 'patches/16.21/normal/heroes.json')
+        const heroes = JSON.parse(fs.readFileSync(heroesFile, 'utf8'))
+        delete heroes['157'].win_rate
+        fs.writeFileSync(heroesFile, JSON.stringify(heroes))
+      }),
+    ).toThrow(/id=157.*winRate/)
+  })
+
+  it('heroes.json 为空对象时报错', () => {
+    expect(() =>
+      parseBrokenFixture((tmp) => {
+        fs.writeFileSync(path.join(tmp, 'patches/16.21/normal/heroes.json'), '{}')
+      }),
+    ).toThrow(/没有英雄数据/)
   })
 })
