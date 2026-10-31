@@ -25,3 +25,12 @@
 | `pnpm deploy` | `pnpm full` 后部署到 Cloudflare Workers |
 
 **`build` 与 `full` 的区别**：数据抓取与分析依赖外部数据源，日常改 UI 只需 `pnpm build`；需要刷新数据产物（或首次构建/部署）时用 `pnpm full`。完整文档见 `docs/plans/`。
+
+## 数据来源与署名
+
+- [aramhex-data](https://github.com/czgreat/aramhex-data) — CC BY-NC 4.0（英雄/海克斯/技能/分段统计数据）
+- 海斗一图流公开 JSON — <https://haidou.zhishitft.cn/>（出装/流派数据，构建期拉取；接入见 Task 2）
+- 腾讯 gtimg 静态资料 — <https://game.gtimg.cn/>（英雄名/图标等静态定义；接入见后续任务）
+
+本项目非商业用途；数据许可归各来源所有，CC BY-NC 4.0 要求署名。
+

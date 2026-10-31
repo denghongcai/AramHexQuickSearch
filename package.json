@@ -3,8 +3,10 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.12",
+    "pnpm": ">=12"
   },
+  "packageManager": "pnpm@12.15.0",
   "scripts": {
     "fetch:data": "node scripts/fetch-sources.mjs",
     "build:data": "node scripts/analyze.mjs",
