@@ -192,7 +192,9 @@ describe('clusterItemFamilies', () => {
       families: [],
       itemFamily: {},
     })
-    // 同一件物品出现在 ≥2 个 build 但彼此无共现 → 各自成单件家族
+    // 物品 1/2 都出现在 ≥2 个 build（是节点）且确有共现（边权 10），但
+    // sim = 10/(20+20-10) = 1/3 < 阈值 0.5 → 各自成单件家族（零共现不合并的
+    // 路径由上面的 fixture 家族间零共现覆盖）
     const lone = clusterItemFamilies([
       { core: { itemIds: [1, 2] }, sampleCount: 10 },
       { core: { itemIds: [1] }, sampleCount: 10 },

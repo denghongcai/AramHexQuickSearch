@@ -174,13 +174,17 @@ export function parseBuilds(heroJson, itemMeta) {
  * 确定性是硬要求：节点/边/候选对的遍历与并列比较全部显式排序（id 升序），
  * 同输入同输出，构建可重现。
  *
- * 容错边界：空数组或全部 build 无核心位 → {families: [], itemFamily: {}}。
+ * 容错边界：空数组或全部 build 无核心位 → {families: [], itemFamily: {}}；
+ * 核心位里的非数字/非有限 id（如 NaN、字符串）静默丢弃（脏缓存防御），
+ * 不抛错。
  * fail-fast 边界：输入非数组、或参与加权的 build 的 sampleCount 非有限数
  * （NaN/undefined 会毒化权重与排序）→ 报错。
  *
  * @param {Array<{core: {itemIds: number[]}, sampleCount: number}>} builds parseBuilds 的输出
  * @returns {{families: Array<{id: number, items: number[], buildCount: number}>,
- *   itemFamily: Object<number, number>}}
+ *   itemFamily: Object<number, number>}} itemFamily 只覆盖节点（出现于
+ *   ≥MIN_CORE_BUILDS 个 build 核心位的物品）；未达门槛的核心位物品没有键，
+ *   消费方必须把"查无此键"当作"无家族"处理
  */
 export function clusterItemFamilies(builds) {
   if (!Array.isArray(builds)) {
