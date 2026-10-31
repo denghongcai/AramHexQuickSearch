@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
-import { describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it } from 'vitest'
 
 import { buildDataset, toPercent2dp, writeDataset } from '../scripts/analyze.mjs'
 import { buildItemMeta, parseBuilds } from '../scripts/lib/haidou-builds.mjs'
@@ -191,12 +191,53 @@ describe('buildDataset → hero 明细', () => {
     expect(dataset.augments.some((r) => r.id === 3176)).toBe(false)
   })
 
-  it('builds 为 parseBuilds 输出的原样透传', () => {
+  it('builds = parseBuilds 输出 + winRate/pickRate 统一转 percent2dp（其余字段原样）', () => {
     const itemMeta = buildItemMeta(JSON.parse(fs.readFileSync(path.join(FIXTURES, 'haidou/items/index.json'), 'utf8')))
     const yasuoJson = JSON.parse(fs.readFileSync(path.join(FIXTURES, 'haidou/heroes/demo-yasuo.json'), 'utf8'))
-    expect(dataset.heroes[0].builds).toEqual(parseBuilds(yasuoJson, itemMeta))
+    const expected = parseBuilds(yasuoJson, itemMeta).map((b) => ({
+      ...b,
+      winRate: toPercent2dp(b.winRate),
+      pickRate: toPercent2dp(b.pickRate),
+    }))
+    expect(dataset.heroes[0].builds).toEqual(expected)
+    // 钉死换算值：crit build 0.6/0.5 → 60/50，meta.units 的 percent2dp 对 builds 同样成立
+    expect(dataset.heroes[0].builds[0]).toMatchObject({ key: 'crit', winRate: 60, pickRate: 50, sampleCount: 1000 })
     // 海斗索引里没有的英雄（fixture: demo-missing 文件缺失）→ builds null
     expect(dataset.heroes.find((h) => h.id === 1).builds).toBeNull()
+  })
+
+  it('build 缺 winRate → 构建期硬错误（toPercent2dp 拒绝 NaN，不让脏行混进产物）', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aramhex-haidou-norate-'))
+    try {
+      fs.copyFileSync(path.join(FIXTURES, 'haidou/index.json'), path.join(dir, 'index.json'))
+      fs.mkdirSync(path.join(dir, 'items'))
+      fs.copyFileSync(path.join(FIXTURES, 'haidou/items/index.json'), path.join(dir, 'items/index.json'))
+      fs.mkdirSync(path.join(dir, 'heroes'))
+      const yasuo = JSON.parse(fs.readFileSync(path.join(FIXTURES, 'haidou/heroes/demo-yasuo.json'), 'utf8'))
+      delete yasuo.builds[0].winRate
+      fs.writeFileSync(path.join(dir, 'heroes/demo-yasuo.json'), JSON.stringify(yasuo))
+      fs.copyFileSync(path.join(FIXTURES, 'haidou/heroes/demo-annie.json'), path.join(dir, 'heroes/demo-annie.json'))
+      expect(() => buildDataset({ ...CACHE_DIRS, haidouDir: dir }, MANIFEST)).toThrow(/有限/)
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('guides[].id 与英雄文件 hero.id 不一致 → 硬错误并给出两边 id（拒绝静默错位关联）', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aramhex-haidou-mismatch-'))
+    try {
+      fs.writeFileSync(path.join(dir, 'index.json'), JSON.stringify({ guides: [{ id: 22, slug: 'impostor' }] }))
+      fs.mkdirSync(path.join(dir, 'items'))
+      fs.copyFileSync(path.join(FIXTURES, 'haidou/items/index.json'), path.join(dir, 'items/index.json'))
+      fs.mkdirSync(path.join(dir, 'heroes'))
+      // demo-yasuo 的 hero.id=157，却挂在 guide id=22（李青）名下
+      fs.copyFileSync(path.join(FIXTURES, 'haidou/heroes/demo-yasuo.json'), path.join(dir, 'heroes/impostor.json'))
+      expect(() => buildDataset({ ...CACHE_DIRS, haidouDir: dir }, MANIFEST)).toThrow(
+        /heroId=22（slug=impostor）与英雄文件内的 hero\.id=157 不一致/,
+      )
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
   })
 })
 
@@ -303,13 +344,19 @@ describe('fail-fast 边界', () => {
 
   it('haidou index.json 结构漂移（无 guides 数组）→ 报错', () => {
     const badDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aramhex-haidou-bad-'))
-    fs.writeFileSync(path.join(badDir, 'index.json'), '{"site":"broken"}')
-    expect(() => buildDataset({ ...CACHE_DIRS, haidouDir: badDir }, MANIFEST)).toThrow(/guides/)
+    try {
+      fs.writeFileSync(path.join(badDir, 'index.json'), '{"site":"broken"}')
+      expect(() => buildDataset({ ...CACHE_DIRS, haidouDir: badDir }, MANIFEST)).toThrow(/guides/)
+    } finally {
+      fs.rmSync(badDir, { recursive: true, force: true })
+    }
   })
 })
 
 describe('writeDataset', () => {
+  // 模块级一次性构建产物目录：本组全部用例只读它，afterAll 里清理
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aramhex-analyze-'))
+  afterAll(() => fs.rmSync(outDir, { recursive: true, force: true }))
 
   // 预埋上一轮的陈旧产物：写出后必须被清掉
   fs.mkdirSync(path.join(outDir, 'hero'), { recursive: true })

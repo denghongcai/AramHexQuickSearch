@@ -25,13 +25,11 @@ import { fileURLToPath } from 'node:url'
 import { realpathSync } from 'node:fs'
 
 import { parseAramhex } from './lib/aramhex.mjs'
-import { aggregateAugments, computeTiers, spellName } from './lib/aggregate.mjs'
+import { aggregateAugments, computeTiers, spellName, TIER_RULE } from './lib/aggregate.mjs'
 import { buildItemMeta, clusterItemFamilies, parseBuilds } from './lib/haidou-builds.mjs'
+import { isNotFound, readJsonFile } from './lib/json-file.mjs'
 import { DATA_DIR, SOURCES_JSON } from './lib/paths.mjs'
 import { buildSearchKeys } from './lib/search.mjs'
-
-/** meta.tierRule 固定声明，与 aggregate.mjs computeTiers 的切档口径一致。 */
-export const TIER_RULE = 'S/A/B/C/D = 前8%/20%/40%/24%/后8%（累计ceil+同胜率不拆档）'
 
 const ARAMHEX_SOURCE_URL = 'https://github.com/czgreat/aramhex-data'
 const ARAMHEX_LICENSE = 'CC-BY-NC-4.0'
@@ -57,27 +55,6 @@ export function toPercent2dp(rate) {
     throw new Error(`toPercent2dp: 胜率/出场率应为有限数字，收到 ${String(rate)}`)
   }
   return Math.round(scaled) / 100
-}
-
-function readJsonFile(file) {
-  let raw
-  try {
-    raw = fs.readFileSync(file, 'utf8')
-  } catch (err) {
-    const wrapped = new Error(`读取文件失败: ${file}（${err.message}）`, { cause: err })
-    wrapped.code = err.code
-    throw wrapped
-  }
-  try {
-    return JSON.parse(raw)
-  } catch (err) {
-    throw new Error(`解析 JSON 失败: ${file}（${err.message}）`, { cause: err })
-  }
-}
-
-/** fetch 侧容错产生的「文件不存在」（其余错误仍视为缓存污染）。 */
-function isNotFound(err) {
-  return err?.code === 'ENOENT' || err?.cause?.code === 'ENOENT'
 }
 
 /**
@@ -140,6 +117,14 @@ function parseHaidou(haidouDataDir) {
       missing++
       console.warn(`[analyze] haidou 英雄文件缺失，该英雄 builds 降级为 null: ${slug}.json`)
       continue
+    }
+    // 唯一的静默数据错位风险点：索引 id 与英雄文件自带的 hero.id 必须一致，
+    // 否则出装会挂到错误英雄头上——报错并给出两边的 id，绝不静默关联。
+    const heroFileId = heroJson?.hero?.id
+    if (Number(heroFileId) !== heroId) {
+      throw new Error(
+        `haidou guides 的 heroId=${heroId}（slug=${slug}）与英雄文件内的 hero.id=${JSON.stringify(heroFileId)} 不一致，拒绝静默关联`,
+      )
     }
     buildsByHero.set(heroId, parseBuilds(heroJson, itemMeta))
   }
@@ -248,13 +233,18 @@ export function buildDataset(cacheDirs, manifest = {}) {
   const aliasById = parseGtimgHeroList(readJsonFile(path.join(cacheDirs.gtimgDir, 'hero_list.js')))
 
   // 6-7. 每英雄合成检索键与明细，再对全部 build 做装备家族聚类
+  // builds 的 winRate/pickRate 也在此统一转 percent2dp：整个数据集一种口径，
+  // meta.units 的声明才为真（parseBuilds 保持海斗源口径透传，见其 JSDoc）。
+  // 缺 winRate/pickRate 的 build 会被 toPercent2dp 拒绝 → 构建期硬错误。
+  const toPercentBuilds = (builds) =>
+    builds.map((b) => ({ ...b, winRate: toPercent2dp(b.winRate), pickRate: toPercent2dp(b.pickRate) }))
   const missingAlias = []
   const allBuilds = []
   const heroes = aramhex.heroes
     .map((h) => {
       const alias = aliasById[h.id] ?? null
       if (!alias) missingAlias.push(h.id)
-      const builds = buildsByHero?.get(h.id) ?? null
+      const builds = buildsByHero?.has(h.id) ? toPercentBuilds(buildsByHero.get(h.id)) : null
       if (builds) allBuilds.push(...builds)
       return {
         id: h.id,
@@ -421,7 +411,10 @@ if (isMain) {
   try {
     main()
   } catch (err) {
-    console.error(err?.message || String(err))
+    // 预期错误都带 [analyze] 阶段前缀，只打 message；不带前缀的是没被阶段
+    // 包装的意外错误（TypeError 等），打 stack 才有定位信息。
+    const message = err?.message || String(err)
+    console.error(message.startsWith('[analyze]') ? message : (err?.stack || message))
     process.exit(1)
   }
 }

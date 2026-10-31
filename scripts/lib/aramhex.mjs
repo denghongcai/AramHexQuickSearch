@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+import { readJsonFile } from './json-file.mjs'
 import { ARAMHEX_DIR } from './paths.mjs'
 
 /**
@@ -53,20 +54,6 @@ export function latestPatch(patchDirNames) {
   return normal.reduce((best, cur) => (compareVersions(cur, best) > 0 ? cur : best))
 }
 
-function readJson(file) {
-  let raw
-  try {
-    raw = fs.readFileSync(file, 'utf8')
-  } catch (err) {
-    throw new Error(`读取文件失败: ${file}（${err.message}）`, { cause: err })
-  }
-  try {
-    return JSON.parse(raw)
-  } catch (err) {
-    throw new Error(`解析 JSON 失败: ${file}（${err.message}）`, { cause: err })
-  }
-}
-
 /**
  * 解析 AramHex 数据根目录，返回最新正式版本的统计。
  * @param {string} [aramhexDir] 默认 .cache/aramhex-data
@@ -97,11 +84,11 @@ export function parseAramhex(aramhexDir = ARAMHEX_DIR) {
   if (!patch) throw new Error(`patches/ 下没有任何正式版本目录: ${patchesDir}`)
 
   const normalDir = path.join(patchesDir, patch, 'normal')
-  const meta = readJson(path.join(normalDir, 'meta.json'))
-  const heroesRaw = readJson(path.join(normalDir, 'heroes.json'))
-  const augmentsRaw = readJson(path.join(normalDir, 'augments.json'))
-  const heroAugmentsRaw = readJson(path.join(normalDir, 'hero_augments.json'))
-  const spellsRaw = readJson(path.join(normalDir, 'hero_spells.json'))
+  const meta = readJsonFile(path.join(normalDir, 'meta.json'))
+  const heroesRaw = readJsonFile(path.join(normalDir, 'heroes.json'))
+  const augmentsRaw = readJsonFile(path.join(normalDir, 'augments.json'))
+  const heroAugmentsRaw = readJsonFile(path.join(normalDir, 'hero_augments.json'))
+  const spellsRaw = readJsonFile(path.join(normalDir, 'hero_spells.json'))
 
   // 文件里已带官方按胜率名次的 rank，直接沿用；数组按胜率降序重排方便直接展示。
   const heroes = Object.entries(heroesRaw)
@@ -170,7 +157,7 @@ export function parseAramhex(aramhexDir = ARAMHEX_DIR) {
       continue
     }
     const map = {}
-    for (const [heroId, h] of Object.entries(readJson(file))) {
+    for (const [heroId, h] of Object.entries(readJsonFile(file))) {
       map[Number(heroId)] = { winRate: Number(h.win_rate), games: Number(h.games) }
     }
     bands[band] = map

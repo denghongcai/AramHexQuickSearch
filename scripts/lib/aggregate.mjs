@@ -90,6 +90,12 @@ export function aggregateAugments(heroAugments, augmentsMeta, excludedAugmentIds
 export const TIER_ORDER = ['S', 'A', 'B', 'C', 'D']
 
 /**
+ * 切档规则的一句话声明（meta.json 的 tierRule 字段直接引用本常量，
+ * 与 computeTiers 的实现口径同处一个文件，防止文档漂移）。
+ */
+export const TIER_RULE = 'S/A/B/C/D = 前8%/20%/40%/24%/后8%（累计ceil+同胜率不拆档）'
+
+/**
  * 按 winRate 分位给英雄切 S/A/B/C/D 档。
  *
  * 切档规则（n = 英雄数；边界 = 累计人数上限，一律 Math.ceil(n * 累计分位)）：

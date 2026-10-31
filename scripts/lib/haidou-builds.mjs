@@ -101,7 +101,8 @@ function metaLookup(itemMeta) {
  * - starter/recommended 由 item 对象数组映射为名称数组（同样三级兜底）。
  * - summary 取 gameplay.summary 按换行连接，同一英雄的每个 build 相同
  *   （英雄级文案，不是 build 级）；gameplay 缺失时为空字符串。
- * - pickRate/winRate/sampleCount 原样透传（展示层数值口径与海斗一致）。
+ * - pickRate/winRate/sampleCount 原样透传（海斗源口径 0-1 小数）。数值转换在
+ *   analyze 编排层统一做（percent2dp），本模块保持源口径，不自行换算。
  *
  * 容错边界：builds 缺失或为空数组 → 返回 []（部分英雄可能没有出装数据）；
  * itemMeta 查不到名称 → 逐级兜底。fail-fast 边界：heroJson 非对象、builds
