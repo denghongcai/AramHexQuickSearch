@@ -24,3 +24,7 @@ Thumbs.db
 
 # logs
 *.log
+
+# playwright 验收截图与运行产物（本地）
+.playwright-dev/
+.playwright-cli/

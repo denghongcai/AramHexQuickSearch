@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0b1210; /* 页面底 */
+  --color-panel: #111917; /* 面板 */
+  --color-edge: #223029; /* 描边 */
+  --color-accent: #3ef0b0; /* 主色（青绿） */
+  --color-txt: #e8f0ec; /* 主文字 */
+  --color-muted: #7d8f87; /* 次文字 */
+  --color-tier-s: #f5c04a;
+  --color-tier-a: #c78ef0;
+  --color-tier-b: #5aa9e6;
+  --color-tier-c: #8fa39b;
+  --color-tier-d: #e06c5a;
+  --color-rar-prismatic: #d7a7ff;
+  --color-rar-gold: #efc54a;
+  --color-rar-silver: #aebcc3;
+  --font-tnum: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* 深色唯一主题，不做切换 */
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-txt);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    "PingFang SC",
+    "Microsoft YaHei",
+    sans-serif;
+}
+
+/* lg（≥1024px）起整页不滚动，滚动只发生在各栏内部 */
+@media (min-width: 64rem) {
+  html,
+  body {
+    overflow: hidden;
+  }
+}
+
+/* 细滚动条，贴合深色主题 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-edge) transparent;
+}
