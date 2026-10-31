@@ -7,6 +7,9 @@ dist/
 # data cache
 .cache/
 
+# generated dataset (pnpm build:data)
+public/data/
+
 # secrets / local env
 .dev.vars
 .env

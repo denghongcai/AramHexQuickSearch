@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "site": "haidou-fixture",
+  "guides": [
+    {
+      "id": 157,
+      "slug": "demo-yasuo",
+      "riotId": "Yasuo",
+      "name": "演示·亚索",
+      "title": "测试数据之刃"
+    },
+    {
+      "id": 22,
+      "slug": "demo-annie",
+      "riotId": "Annie",
+      "name": "演示·安妮",
+      "title": "测试数据之影"
+    },
+    {
+      "id": 1,
+      "slug": "demo-missing",
+      "riotId": "Missing",
+      "name": "演示·缺失",
+      "title": "没有英雄文件的 slug（fetch 侧 FAILED.json 场景）"
+    }
+  ]
+}

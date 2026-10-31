@@ -1,7 +1,8 @@
 {
   "157": {
     "1134": { "games": 50000, "wins": 29000, "win_rate": 0.58, "low_sample": false },
-    "1002": { "games": 1200, "wins": 650, "win_rate": 0.541667, "low_sample": true }
+    "1002": { "games": 1200, "wins": 650, "win_rate": 0.541667, "low_sample": true },
+    "1337": { "games": 900, "wins": 300, "win_rate": 0.333333, "low_sample": true }
   },
   "22": {
     "1001": { "games": 9000, "wins": 4700, "win_rate": 0.522222, "low_sample": false },

@@ -19,5 +19,8 @@ export const GTIMG_DIR = path.join(CACHE_DIR, 'gtimg')
 /** Manifest written after a full successful fetch run. */
 export const SOURCES_JSON = path.join(CACHE_DIR, 'sources.json')
 
+/** Generated dataset consumed by the frontend (gitignored; written by analyze.mjs). */
+export const DATA_DIR = path.join(ROOT_DIR, 'public/data')
+
 /** Per-file failures tolerated during the haidou fetch. */
 export const HAIDOU_FAILED_JSON = path.join(HAIDOU_DIR, 'FAILED.json')
