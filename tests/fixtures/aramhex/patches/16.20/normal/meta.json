@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "patch": "16.20",
+  "mode": "normal",
+  "snapshot_at": "2026-10-24T08:00:00+08:00",
+  "matches": { "collected": 1, "valid": 1, "excluded": 0 }
+}

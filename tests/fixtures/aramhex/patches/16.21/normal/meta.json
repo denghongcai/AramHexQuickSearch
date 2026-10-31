@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "patch": "16.21",
+  "label": "16.21 版本 · 常规",
+  "mode": "normal",
+  "snapshot_at": "2026-10-31T02:25:44.658064+08:00",
+  "heroes": 3,
+  "hero_participations": 123456,
+  "low_sample_threshold": 3000,
+  "matches": {
+    "collected": 218549,
+    "valid": 211699,
+    "excluded": 6850,
+    "validity_rule": "对局时长不少于 4 分钟（240 秒）"
+  },
+  "excluded_augments": {
+    "1337": {
+      "name": "尊我为王",
+      "reason": "任务完成后被替换，结算持有统计失真"
+    },
+    "3176": {
+      "name": "赛季之星:五杀摇滚",
+      "reason": "五杀乐队通用标记，不作为独立海克斯"
+    }
+  },
+  "regions": ["艾欧尼亚", "联盟一区"]
+}

@@ -1,0 +1,20 @@
+{
+  "157": {
+    "name": "亚索",
+    "title": "疾风剑豪",
+    "games": 300000,
+    "wins": 180000,
+    "win_rate": 0.6,
+    "pick_rate": 0.012,
+    "rank": 2
+  },
+  "22": {
+    "name": "李青",
+    "title": "盲僧",
+    "games": 150000,
+    "wins": 81000,
+    "win_rate": 0.54,
+    "pick_rate": 0.009,
+    "rank": 5
+  }
+}
