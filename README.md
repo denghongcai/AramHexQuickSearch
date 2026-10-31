@@ -1,6 +1,6 @@
 # 海克斯大乱斗速查（AramHexQuickSearch）
 
-海克斯大乱斗数据速查站 · 构建时离线分析 [aramhex-data](https://github.com/Perfect-World/aramhex-data)。
+海克斯大乱斗数据速查站 · 构建时离线分析 [aramhex-data](https://github.com/czgreat/aramhex-data)。
 
 > **开发中** — 脚手架阶段，功能尚未实现。
 
