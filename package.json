@@ -1,0 +1,37 @@
+{
+  "name": "aramhex-quick-search",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "fetch:data": "node scripts/fetch-sources.mjs",
+    "build:data": "node scripts/analyze.mjs",
+    "dev": "pnpm -s fetch:data && pnpm -s build:data && vite",
+    "build": "vite build",
+    "full": "pnpm -s fetch:data && pnpm -s build:data && vite build",
+    "test": "vitest run --passWithNoTests",
+    "preview": "wrangler dev",
+    "deploy": "pnpm -s full && wrangler deploy"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.105.0",
+    "@tanstack/react-router": "^1.170.46",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261030.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "pinyin-pro": "^3.29.5",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5",
+    "wrangler": "^4.156.0"
+  }
+}

@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# data cache
+.cache/
+
+# secrets / local env
+.dev.vars
+.env
+.env.*
+
+# wrangler
+.wrangler/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
