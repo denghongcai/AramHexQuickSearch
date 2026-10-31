@@ -99,6 +99,16 @@ describe('aggregateAugments', () => {
     const meta = { 101: { name: '棱彩甲', rarity: 'prismatic' } }
     expect(() => aggregateAugments(bad, meta, [])).toThrow(/101/)
   })
+
+  it('games 为 0 的条目报错（全零海克斯会让 wins/games=NaN 毒化排序）', () => {
+    const bad = {
+      1: { 101: { games: 0, wins: 0, winRate: 0, lowSample: false } },
+      2: { 101: { games: 10, wins: 5, winRate: 0.5, lowSample: false } },
+    }
+    // 即便别的英雄有正 games，只要任一条目 games<=0 就得炸，不能悄悄并出 NaN
+    expect(() => aggregateAugments(bad, augmentsMeta, [])).toThrow(/101/)
+    expect(() => aggregateAugments({ 1: { 200: { games: -1, wins: 0, winRate: 0, lowSample: false } } }, augmentsMeta, [])).toThrow(/200/)
+  })
 })
 
 /** 造 n 个英雄，winRate 从 0.6 起严格递减（无 toFixed，防浮点意外并列），可传 override 定制并列。 */
@@ -202,9 +212,15 @@ describe('spellName / spellComboName', () => {
     expect(spellName([4, 14])).toBe('闪现+点燃')
   })
 
-  it('未知 id 容错为 技能+id（真实数据含表外 id 13）', () => {
-    expect(spellName([13])).toBe('技能13')
-    expect(spellName([4, 13])).toBe('闪现+技能13')
+  it('id 13 = 清晰术（真实数据 7 种组合含 13，约 0.81% 对局）', () => {
+    expect(spellName([13])).toBe('清晰术')
+    expect(spellComboName('13+14')).toBe('清晰术+点燃')
+    expect(spellComboName('4+13')).toBe('闪现+清晰术')
+  })
+
+  it('未知 id 容错为 技能+id，不抛错', () => {
+    expect(spellName([999])).toBe('技能999')
+    expect(spellName([4, 999])).toBe('闪现+技能999')
     expect(() => spellName(['怪东西'])).not.toThrow()
   })
 

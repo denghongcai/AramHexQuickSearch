@@ -15,12 +15,13 @@
  *   不取单英雄口径的平均（大样本英雄权重应更高）。
  * - pickRate：games / Σ(同稀有度全部海克斯 games)。不同稀有度的出现池不同
  *   （棱彩只在棱彩池出现），分稀有度归一口径才正确；排除项不计入分母。
- * - heroCount：出现该海克斯的英雄数（games > 0 的条目数）。
+ * - heroCount：出现该海克斯的英雄数（条目数；games≤0 的条目在校验时即被拒绝）。
  * - rank：按 winRate 降序，同 winRate 按 id 升序稳定排序，rank = 名次（1 起）。
  * - 输出数组即按 rank 排列，可直接进榜。
  *
  * 防静默脏数据（与 aramhex.mjs 同哲学）：heroAugments 里出现 augments meta
- * 没有的 id、或 games/wins 非有限数值时，构建期报错而不是产出 NaN 行。
+ * 没有的 id、或 games/wins 非有限数值、或 games≤0（全零海克斯会让
+ * wins/games=NaN 悄悄毒化排名排序）时，构建期报错而不是产出 NaN 行。
  * excludedAugmentIds 里的 id（如 1337/3176）无论是否出现在数据中都安全跳过。
  *
  * @param {Object<number, Object<number, {games:number, wins:number}>>} heroAugments
@@ -43,15 +44,15 @@ export function aggregateAugments(heroAugments, augmentsMeta, excludedAugmentIds
           `heroAugments 里的海克斯 id=${augId}（英雄 ${heroId}）不在 augments meta 中，拒绝静默聚合`,
         )
       }
-      if (!Number.isFinite(Number(s.games)) || !Number.isFinite(Number(s.wins))) {
+      if (!Number.isFinite(Number(s.games)) || !Number.isFinite(Number(s.wins)) || Number(s.games) <= 0) {
         throw new Error(
-          `heroAugments 数值字段非法: 英雄 ${heroId} 海克斯 id=${augId} games=${s.games} wins=${s.wins}`,
+          `heroAugments 数值字段非法: 英雄 ${heroId} 海克斯 id=${augId} games=${s.games} wins=${s.wins}（games 必须为正有限数）`,
         )
       }
       const t = totals.get(augId) ?? { games: 0, wins: 0, heroCount: 0 }
       t.games += Number(s.games)
       t.wins += Number(s.wins)
-      if (Number(s.games) > 0) t.heroCount += 1
+      t.heroCount += 1
       totals.set(augId, t)
     }
   }
@@ -136,7 +137,7 @@ export function computeTiers(heroes) {
   return tiers
 }
 
-/** 召唤师技能 id → 中文名。表外 id 容错为 "技能"+id，不抛错。 */
+/** 召唤师技能 id → 中文名（13 清晰术来自 gtimg summonerskill_list，真实数据 7 种组合在用）。表外 id 容错为 "技能"+id，不抛错。 */
 const SPELL_NAMES = {
   1: '净化',
   3: '疾跑',
@@ -145,6 +146,7 @@ const SPELL_NAMES = {
   7: '治疗',
   11: '惩戒',
   12: '传送',
+  13: '清晰术',
   14: '点燃',
   21: '屏障',
   32: '标记',
