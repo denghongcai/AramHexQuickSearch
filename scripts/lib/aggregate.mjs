@@ -4,7 +4,8 @@
  * 输入全部来自 scripts/lib/aramhex.mjs 的 parseAramhex()（内存对象）：
  * - heroAugments: {[heroId]: {[augId]: {games, wins, winRate, lowSample}}}
  * - augments:     {[augId]: {name, rarity}}，rarity ∈ 'prismatic'|'gold'|'silver'
- * - heroes:       [{id, name, ..., winRate}]，按 winRate 降序
+ * - heroes:       [{id, name, ..., winRate}]（parseAramhex 输出即按 winRate
+ *   降序，但 computeTiers 并不要求有序——内部会自行重排）
  */
 
 /**
@@ -20,8 +21,9 @@
  * - 输出数组即按 rank 排列，可直接进榜。
  *
  * 防静默脏数据（与 aramhex.mjs 同哲学）：heroAugments 里出现 augments meta
- * 没有的 id、或 games/wins 非有限数值、或 games≤0（全零海克斯会让
- * wins/games=NaN 悄悄毒化排名排序）时，构建期报错而不是产出 NaN 行。
+ * 没有的 id、或数值越界（games 非有限或 ≤0、wins 非有限或 <0 或 >games——
+ * 全零/倒挂都会让 wins/games 产出毒化排名排序的 NaN 或 >1 的假第一）时，
+ * 构建期报错而不是产出脏行。
  * excludedAugmentIds 里的 id（如 1337/3176）无论是否出现在数据中都安全跳过。
  *
  * @param {Object<number, Object<number, {games:number, wins:number}>>} heroAugments
@@ -31,7 +33,7 @@
  *   winRate:number, pickRate:number, heroCount:number, rank:number}>}
  */
 export function aggregateAugments(heroAugments, augmentsMeta, excludedAugmentIds = []) {
-  const excluded = new Set((excludedAugmentIds ?? []).map(Number))
+  const excluded = new Set(excludedAugmentIds.map(Number))
   const totals = new Map() // augId -> {games, wins, heroCount}
 
   for (const [heroId, augs] of Object.entries(heroAugments ?? {})) {
@@ -44,14 +46,16 @@ export function aggregateAugments(heroAugments, augmentsMeta, excludedAugmentIds
           `heroAugments 里的海克斯 id=${augId}（英雄 ${heroId}）不在 augments meta 中，拒绝静默聚合`,
         )
       }
-      if (!Number.isFinite(Number(s.games)) || !Number.isFinite(Number(s.wins)) || Number(s.games) <= 0) {
+      const g = Number(s.games)
+      const w = Number(s.wins)
+      if (!Number.isFinite(g) || !Number.isFinite(w) || g <= 0 || w < 0 || w > g) {
         throw new Error(
-          `heroAugments 数值字段非法: 英雄 ${heroId} 海克斯 id=${augId} games=${s.games} wins=${s.wins}（games 必须为正有限数）`,
+          `heroAugments 数值字段非法: 英雄 ${heroId} 海克斯 id=${augId} games=${s.games} wins=${s.wins}（需 0 < games 有限且 0 ≤ wins ≤ games）`,
         )
       }
       const t = totals.get(augId) ?? { games: 0, wins: 0, heroCount: 0 }
-      t.games += Number(s.games)
-      t.wins += Number(s.wins)
+      t.games += g
+      t.wins += w
       t.heroCount += 1
       totals.set(augId, t)
     }
@@ -120,18 +124,19 @@ export function computeTiers(heroes) {
   const bounds = [ceil(0.08), ceil(0.28), ceil(0.68), n - ceil(0.08)]
 
   let prev = 0
-  const clamped = bounds.map((b) => {
+  const tierEnds = bounds.map((b) => {
     const start = Math.min(Math.max(b, prev), n)
-    // 边界两侧 winRate 相等 → 边界右移，整组归更高档
+    // 边界两侧 winRate 相等 → 边界右移，整组归更高档。
+    // 同一源字符串解析出的 double 逐位相等，故用严格相等；不要改成 epsilon
     let end = start
     while (end < n && sorted[end].winRate === sorted[start - 1]?.winRate) end++
     prev = end
     return end
   })
-  // [0, c0)=S, [c0, c1)=A, [c1, c2)=B, [c2, c3)=C, [c3, n)=D
+  // [0, e0)=S, [e0, e1)=A, [e1, e2)=B, [e2, e3)=C, [e3, n)=D
   const tiers = {}
   for (let i = 0; i < n; i++) {
-    const t = clamped[0] > i ? 'S' : clamped[1] > i ? 'A' : clamped[2] > i ? 'B' : clamped[3] > i ? 'C' : 'D'
+    const t = tierEnds[0] > i ? 'S' : tierEnds[1] > i ? 'A' : tierEnds[2] > i ? 'B' : tierEnds[3] > i ? 'C' : 'D'
     tiers[sorted[i].id] = t
   }
   return tiers

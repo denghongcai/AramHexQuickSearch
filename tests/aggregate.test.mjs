@@ -109,6 +109,19 @@ describe('aggregateAugments', () => {
     expect(() => aggregateAugments(bad, augmentsMeta, [])).toThrow(/101/)
     expect(() => aggregateAugments({ 1: { 200: { games: -1, wins: 0, winRate: 0, lowSample: false } } }, augmentsMeta, [])).toThrow(/200/)
   })
+
+  it('wins 越界报错：wins>games 会以 winRate>1 假排第一，负 wins 同拒', () => {
+    expect(() =>
+      aggregateAugments({ 1: { 101: { games: 10, wins: 15, winRate: 1.5, lowSample: false } } }, augmentsMeta, []),
+    ).toThrow(/101/)
+    expect(() =>
+      aggregateAugments({ 1: { 101: { games: 10, wins: -1, winRate: -0.1, lowSample: false } } }, augmentsMeta, []),
+    ).toThrow(/101/)
+  })
+
+  it('空输入返回空数组', () => {
+    expect(aggregateAugments({}, {}, [])).toEqual([])
+  })
 })
 
 /** 造 n 个英雄，winRate 从 0.6 起严格递减（无 toFixed，防浮点意外并列），可传 override 定制并列。 */
@@ -196,6 +209,7 @@ describe('computeTiers', () => {
 
 describe('spellName / spellComboName', () => {
   it('静态表覆盖全部常见召唤师技能', () => {
+    expect(spellName(4)).toBe('闪现') // 单个数字入参
     expect(spellName([1])).toBe('净化')
     expect(spellName([3])).toBe('疾跑')
     expect(spellName([4])).toBe('闪现')
