@@ -13,7 +13,7 @@ export const ARAMHEX_DIR = path.join(CACHE_DIR, 'aramhex-data')
 /** Haidou scraped JSON mirror (or HAIDOU_LOCAL_DIR override target). */
 export const HAIDOU_DIR = path.join(CACHE_DIR, 'haidou')
 
-/** Raw game.gtimg.cn JS dumps (parsed downstream, not here). */
+/** Raw game.gtimg.cn JSON dumps (.js filenames), parsed downstream not here. */
 export const GTIMG_DIR = path.join(CACHE_DIR, 'gtimg')
 
 /** Manifest written after a full successful fetch run. */

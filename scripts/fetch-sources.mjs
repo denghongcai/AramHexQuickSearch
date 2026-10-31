@@ -5,7 +5,8 @@
  * Three public, anonymous sources, all cached under .cache/ (gitignored):
  *   1. aramhex  — git clone/pull of https://github.com/czgreat/aramhex-data
  *   2. haidou   — JSON scrape of https://haidou.zhishitft.cn (index + heroes + aux)
- *   3. gtimg    — raw game.gtimg.cn JS dumps (var xxx = {...}; NOT parsed here)
+ *   3. gtimg    — game.gtimg.cn JSON served with .js filenames, saved verbatim
+ *                 (NOT parsed here; parsing is deferred to later tasks)
  *
  * Env overrides (directory paths only, no secrets):
  *   FRESH=1            force refetch even when the cache manifest exists
@@ -18,9 +19,10 @@
 
 import { execFile } from 'node:child_process'
 import { mkdir, copyFile, readFile, writeFile } from 'node:fs/promises'
-import { existsSync } from 'node:fs'
+import { existsSync, realpathSync } from 'node:fs'
 import path from 'node:path'
 import { promisify } from 'node:util'
+import { fileURLToPath } from 'node:url'
 
 import {
   ARAMHEX_DIR,
@@ -187,8 +189,8 @@ export async function fetchHaidou() {
 }
 
 /**
- * Source 3: game.gtimg.cn JS dumps, saved verbatim. These are JavaScript
- * assignments (var xxx = {...};), not JSON — parsing is downstream's job.
+ * Source 3: game.gtimg.cn JSON dumps (served with .js filenames), saved
+ * verbatim and unparsed — parsing is deferred to later tasks.
  */
 export async function fetchGtimg() {
   await mkdir(GTIMG_DIR, { recursive: true })
@@ -226,7 +228,21 @@ async function main() {
   console.log(JSON.stringify(manifest, null, 2))
 }
 
-main().catch((err) => {
-  console.error(`[fetch] FAILED: ${err.message}`)
-  process.exit(1)
-})
+// Only auto-run when executed directly (node scripts/fetch-sources.mjs).
+// vitest imports this module for its pure helpers; a bare import must never
+// trigger real network fetches. realpath on both sides keeps symlinks honest.
+const isMain = (() => {
+  try {
+    const entry = process.argv[1]
+    return Boolean(entry) && realpathSync(entry) === realpathSync(fileURLToPath(import.meta.url))
+  } catch {
+    return false
+  }
+})()
+
+if (isMain) {
+  await main().catch((err) => {
+    console.error(`[fetch] FAILED: ${err.message}`)
+    process.exit(1)
+  })
+}
