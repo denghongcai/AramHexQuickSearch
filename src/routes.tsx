@@ -96,6 +96,11 @@ function AboutPage() {
 
 const rootRoute = createRootRoute({
   component: RootLayout,
+  // ?q=：英雄榜搜索词。声明在根路由，rail 在所有路由（lg 侧栏）都可见，各处均可读写。
+  // q 为空/缺失时从 URL 上摘掉，保持地址干净。
+  validateSearch: (search: Record<string, unknown>): { q?: string } => ({
+    q: typeof search.q === 'string' && search.q ? search.q : undefined,
+  }),
   // 未知路径 → 回首页
   notFoundComponent: () => <Navigate to="/" replace />,
 })

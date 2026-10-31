@@ -32,6 +32,13 @@ export interface HeroRow {
   pickRate: number
   games: number
   buildCount: number
+  /** 构建期检索键（scripts/lib/search.mjs），n/t/p/f 口径见该文件 */
+  search: {
+    n: string[]
+    t: string[]
+    p: string[]
+    f: string[]
+  }
 }
 
 export interface HeroesPayload {

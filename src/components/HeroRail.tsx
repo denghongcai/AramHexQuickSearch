@@ -1,7 +1,8 @@
-import { memo, useState } from 'react'
+import { memo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Link, useRouterState } from '@tanstack/react-router'
+import { Link, useRouter, useRouterState, useSearch } from '@tanstack/react-router'
 import { heroQuery, useHeroes, type HeroRow } from '@/lib/api'
+import { filterHeroes } from '@/lib/search'
 
 /** tier → 色片配色（字面量写死，保证 Tailwind 扫描得到） */
 const TIER_CLASS: Record<string, string> = {
@@ -66,19 +67,32 @@ const HeroItem = memo(function HeroItem({ hero }: { hero: HeroRow }) {
 /**
  * 英雄榜栏：搜索框 + 英雄列表。
  * lg 下占 360px 左栏、列表内部滚动；<lg 下全宽、随页面滚动（无内滚）。
- * 搜索框本任务只渲染存本地 state，过滤逻辑 Task 9 接线。
+ * 查询词落在 ?q=（根路由 validateSearch），replace 写入不产生历史记录，
+ * 刷新/分享/后退都能还原过滤态。
  */
 export function HeroRail({ className = '' }: { className?: string }) {
   const { data, isPending, isError } = useHeroes()
-  const [q, setQ] = useState('')
+  // router.navigate 不带 from：search-only 更新停在当前路径（详情页里打字不丢 /hero/$id）
+  const router = useRouter()
+  const { q } = useSearch({ strict: false }) as { q?: string }
+
+  const heroes = data?.heroes ?? []
+  const visible = filterHeroes(heroes, q ?? '')
 
   return (
     <aside className={`flex min-h-0 min-w-0 flex-col bg-panel ${className}`}>
       <div className="p-3">
         <input
           type="search"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
+          value={q ?? ''}
+          onChange={(e) =>
+            void router.navigate({
+              // '.' = 停在当前路径；函数式更新保留其他 search 参数；空串摘掉 q，URL 回到干净状态
+              to: '.',
+              search: (prev) => ({ ...prev, q: e.target.value || undefined }),
+              replace: true,
+            })
+          }
           aria-label="搜索英雄 / 拼音 / 别名"
           placeholder="搜索英雄 / 拼音 / 别名"
           className="w-full rounded-lg border border-edge bg-ink px-3 py-2 text-sm outline-none placeholder:text-muted focus:border-accent"
@@ -93,9 +107,13 @@ export function HeroRail({ className = '' }: { className?: string }) {
         </ul>
       ) : isError ? (
         <p className="p-4 text-sm text-tier-d">英雄榜加载失败，请刷新重试。</p>
+      ) : visible.length === 0 ? (
+        <p className="p-4 text-sm text-muted" role="status">
+          没有匹配「{q}」的英雄
+        </p>
       ) : (
         <ul className="min-h-0 flex-1 pb-(--bottom-nav-h) lg:overflow-y-auto lg:pb-2">
-          {(data?.heroes ?? []).map((hero) => (
+          {visible.map((hero) => (
             <HeroItem key={hero.id} hero={hero} />
           ))}
         </ul>
