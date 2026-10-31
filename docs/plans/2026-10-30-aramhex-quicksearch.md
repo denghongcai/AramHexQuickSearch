@@ -226,7 +226,7 @@ describe('aramhex', () => {
 **Files:** `src/components/HeroRail.tsx`、`src/lib/search.ts`（运行时匹配：对预计算 search keys 做 includes）
 
 - 输入 `?q=`（router search param，受控输入写入 URL，replace 模式）。
-- 匹配：对 `search.n/t/p/f` 任一 includes（查询串先 `NFKC→小写→去非字母数字`；拼音查询直接比对 p 字段）。
+- 匹配：对 `search.n/t/f` 任一 includes。**查询串归一必须与构建期同口径**（参照实现：`scripts/lib/search.mjs` 的 `normalize`）：`NFKC → toLocaleLowerCase('zh-CN') → 保留 a-z0-9 与 CJK、去其余`（不要把 CJK 删掉，否则中文查询变空串全匹配），归一后再做 `ü→v`（构建期键里已存 v，用户粘贴 `nü` 也能命中）。p 字段是 n 的子集（仅拉丁别名），可以不参与匹配。
 - 行内容：`#rank 图标 名称 tier片 wr% pick%`，当前路由高亮。
 - **测试**：`src/lib/search.ts` 纯函数 vitest 用例（拼音/别名/称号/数字 id）。
 
