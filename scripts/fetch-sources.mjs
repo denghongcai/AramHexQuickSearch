@@ -12,14 +12,19 @@
  *   FRESH=1            force refetch even when the cache manifest exists
  *   ARAMHEX_LOCAL_DIR  use a local aramhex-data checkout instead of clone/pull
  *   HAIDOU_LOCAL_DIR   copy haidou files from a local mirror instead of HTTP
+ *   DEBUG=1            verbose logging (e.g. gtimg file head)
  *
- * Degradation: a failed haidou hero/aux file is recorded in .cache/haidou/FAILED.json
- * and the run continues; only data/index.json failing aborts the haidou source.
+ * Degradation: a failed haidou hero/aux file (or a hostile-slug path, which is
+ * rejected before any I/O) is recorded in .cache/haidou/FAILED.json and the run
+ * continues. A total haidou outage (index.json unavailable) degrades to
+ * haidouDir:null / haidouCounts:null in sources.json while aramhex + gtimg
+ * still fetch and the run exits 0 — downstream treats a missing haidou dir as
+ * builds:null. Only an aramhex first-clone failure is fatal.
  */
 
 import { execFile } from 'node:child_process'
-import { mkdir, copyFile, readFile, writeFile } from 'node:fs/promises'
-import { existsSync, realpathSync } from 'node:fs'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import path from 'node:path'
 import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
@@ -39,6 +44,7 @@ const ARAMHEX_REPO = 'https://github.com/czgreat/aramhex-data'
 const HAIDOU_BASE = 'https://haidou.zhishitft.cn'
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
+const FETCH_TIMEOUT_MS = 30_000
 
 const HAIDOU_AUX = [
   'data/augments/index.json',
@@ -64,22 +70,61 @@ export function shouldSkipFetch({ cacheExists, fresh }) {
   return cacheExists && !fresh
 }
 
-/** Map hero slugs to their haidou JSON URLs. */
-export function haidouHeroUrls(slugs, base) {
-  return slugs.map((slug) => `${base}/data/heroes/${slug}.json`)
+/** Hero JSON paths relative to the haidou cache dir (single source of truth). */
+export function haidouHeroRels(slugs) {
+  return slugs.map((slug) => `data/heroes/${slug}.json`)
 }
 
-/** GET with a plain browser UA; retries twice with exponential backoff (0.5s, 1s). */
+/** Map hero slugs to their haidou JSON URLs. */
+export function haidouHeroUrls(slugs, base) {
+  return haidouHeroRels(slugs).map((rel) => `${base}/${rel}`)
+}
+
+const CACHE_SEGMENT_RE = /^[A-Za-z0-9._-]+$/
+
+/**
+ * Resolve a slash-relative haidou path under HAIDOU_DIR, refusing traversal.
+ * index.json is third-party data; a hostile slug like "../package.json" must
+ * never write outside .cache. Throws on unsafe input — callers treat that as a
+ * per-file failure (FAILED.json), not a crash.
+ */
+export function cacheFile(rel) {
+  const segments = rel.split('/')
+  if (segments.some((segment) => !CACHE_SEGMENT_RE.test(segment) || segment === '..')) {
+    throw new Error(`unsafe path rejected: "${rel}"`)
+  }
+  const abs = path.join(HAIDOU_DIR, ...segments)
+  if (!abs.startsWith(HAIDOU_DIR + path.sep)) {
+    throw new Error(`path escapes cache dir: "${rel}"`)
+  }
+  return abs
+}
+
+/**
+ * GET with a plain browser UA and a 30s timeout. Retries 429/5xx and network
+ * errors twice with exponential backoff (0.5s, 1s); other 4xx (404/403/410…)
+ * are permanent and fail immediately. The final error always names the URL.
+ */
 async function fetchWithRetry(url, { retries = 2, backoffMs = [500, 1000] } = {}) {
   for (let attempt = 0; ; attempt++) {
     try {
-      const res = await fetch(url, { headers: { 'User-Agent': UA } })
-      if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`)
+      const res = await fetch(url, {
+        headers: { 'User-Agent': UA },
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      })
+      if (!res.ok) {
+        const err = new Error(`HTTP ${res.status} ${res.statusText}`)
+        err.retryable = res.status === 429 || res.status >= 500
+        throw err
+      }
       return Buffer.from(await res.arrayBuffer())
     } catch (err) {
-      if (attempt >= retries) throw err
+      const retryable = err.retryable !== false // network/timeout errors retry
+      if (attempt >= retries || !retryable) {
+        throw new Error(`${url}: ${err?.message || String(err)}`, { cause: err })
+      }
       const delay = backoffMs[Math.min(attempt, backoffMs.length - 1)]
-      console.warn(`  [retry ${attempt + 1}/${retries}] ${url} failed (${err.message}); wait ${delay}ms`)
+      console.warn(`  [retry ${attempt + 1}/${retries}] ${url} failed (${err?.message || err}); wait ${delay}ms`)
       await sleep(delay)
     }
   }
@@ -102,13 +147,14 @@ async function runPool(items, concurrency, worker) {
 
 /**
  * Source 1: aramhex-data git repo.
- * Local override (ARAMHEX_LOCAL_DIR) wins; otherwise pull --ff-only an existing
- * clone, clone shallow when missing, and record HEAD. Pull failure degrades to
- * reusing the existing copy; a failed first clone is fatal.
+ * Local override (ARAMHEX_LOCAL_DIR, must exist) wins; otherwise pull --ff-only
+ * an existing clone, clone shallow when missing, and record HEAD. Pull failure
+ * degrades to reusing the existing copy; a failed first clone is fatal.
  */
 export async function fetchAramhex() {
   if (process.env.ARAMHEX_LOCAL_DIR) {
     const dir = path.resolve(process.env.ARAMHEX_LOCAL_DIR)
+    if (!existsSync(dir)) throw new Error(`ARAMHEX_LOCAL_DIR does not exist: ${dir}`)
     console.log(`[aramhex] using local dir: ${dir}`)
     return { dir, commit: 'local' }
   }
@@ -135,7 +181,9 @@ export async function fetchAramhex() {
 
 /**
  * Source 2: haidou JSON mirror.
- * index.json is mandatory (fatal); every other file degrades into FAILED.json.
+ * Every per-file failure — including hostile-slug path rejection — degrades
+ * into FAILED.json. A total outage (index.json unavailable) degrades to
+ * {dir: null, counts: null} so the overall build still succeeds.
  */
 export async function fetchHaidou() {
   const localDir = process.env.HAIDOU_LOCAL_DIR
@@ -143,31 +191,47 @@ export async function fetchHaidou() {
     : null
   const failed = []
 
-  // Mandatory entry point: data/index.json (local copy or HTTP).
-  const indexPath = 'data/index.json'
-  let indexBytes
-  if (localDir) {
-    indexBytes = await readFile(path.join(localDir, indexPath))
-  } else {
-    indexBytes = await fetchWithRetry(`${HAIDOU_BASE}/${indexPath}`)
+  const writeFailedJson = async () => {
+    await mkdir(HAIDOU_DIR, { recursive: true })
+    await writeFile(
+      HAIDOU_FAILED_JSON,
+      JSON.stringify({ fetchedAt: new Date().toISOString(), failed }, null, 2) + '\n',
+    )
   }
-  const index = JSON.parse(indexBytes.toString('utf8'))
+
+  // Entry point: data/index.json. Its absence is a total haidou outage —
+  // skip the whole source gracefully (haidou:null in the manifest), never fatal.
+  const indexPath = 'data/index.json'
+  let index
+  let indexBytes
+  try {
+    indexBytes = localDir
+      ? await readFile(path.join(localDir, indexPath))
+      : await fetchWithRetry(`${HAIDOU_BASE}/${indexPath}`)
+    index = JSON.parse(indexBytes.toString('utf8'))
+  } catch (err) {
+    const message = err?.message || String(err)
+    console.warn(`[haidou] index.json unavailable (${message}); skipping haidou source, build continues`)
+    failed.push({ path: indexPath, error: message })
+    await writeFailedJson()
+    return { dir: null, counts: null }
+  }
+
   const slugs = index.guides.map((g) => g.slug)
   console.log(`[haidou] index: ${slugs.length} guides`)
-
-  await mkdir(path.join(HAIDOU_DIR, 'data', 'heroes'), { recursive: true })
-  await writeFile(path.join(HAIDOU_DIR, ...indexPath.split('/')), indexBytes)
+  await mkdir(path.dirname(cacheFile(indexPath)), { recursive: true })
+  await writeFile(cacheFile(indexPath), indexBytes)
 
   // Everything below is best-effort: aux config files first, then all heroes.
   const jobs = [
     ...HAIDOU_AUX.map((rel) => ({ rel, isHero: false })),
-    ...slugs.map((slug) => ({ rel: `data/heroes/${slug}.json`, isHero: true })),
+    ...haidouHeroRels(slugs).map((rel) => ({ rel, isHero: true })),
   ]
 
   let heroesOk = 0
   await runPool(jobs, 8, async (job) => {
-    const abs = path.join(HAIDOU_DIR, ...job.rel.split('/'))
     try {
+      const abs = cacheFile(job.rel) // reject hostile slugs before any I/O
       const bytes = localDir
         ? await readFile(path.join(localDir, job.rel))
         : await fetchWithRetry(`${HAIDOU_BASE}/${job.rel}`)
@@ -175,12 +239,12 @@ export async function fetchHaidou() {
       await writeFile(abs, bytes)
       if (job.isHero) heroesOk++
     } catch (err) {
-      failed.push({ path: job.rel, error: String(err.message || err) })
-      if (job.isHero) console.warn(`[haidou] hero failed: ${job.rel} (${err.message})`)
+      failed.push({ path: job.rel, error: err?.message || String(err) })
+      if (job.isHero) console.warn(`[haidou] hero failed: ${job.rel} (${err?.message || err})`)
     }
   })
 
-  await writeFile(HAIDOU_FAILED_JSON, JSON.stringify({ fetchedAt: new Date().toISOString(), failed }, null, 2) + '\n')
+  await writeFailedJson()
 
   const counts = { index: slugs.length, heroes: heroesOk, failed: failed.length }
   console.log(`[haidou] heroes ok=${heroesOk} failed=${failed.length}${localDir ? ` (local: ${localDir})` : ''}`)
@@ -197,16 +261,38 @@ export async function fetchGtimg() {
   for (const { url, file } of GTIMG_FILES) {
     const buf = await fetchWithRetry(url)
     await writeFile(path.join(GTIMG_DIR, file), buf)
-    console.log(`[gtimg] ${file} (${buf.length} bytes) starts with: ${buf.toString('utf8', 0, 120)}`)
+    console.log(`[gtimg] ${file} (${buf.length} bytes)`)
+    if (process.env.DEBUG === '1') {
+      console.log(`[gtimg] ${file} starts with: ${buf.toString('utf8', 0, 120)}`)
+    }
   }
   return { dir: path.resolve(GTIMG_DIR) }
 }
 
+/** Parsed sources.json, or null when missing/corrupt (fall through to fetch). */
+function readManifestSafe() {
+  try {
+    return JSON.parse(readFileSync(SOURCES_JSON, 'utf8'))
+  } catch {
+    return null
+  }
+}
+
+/** A cache is only skippable when all three source dirs still exist on disk. */
+function manifestComplete(manifest) {
+  return Boolean(
+    manifest &&
+      [manifest.aramhexDir, manifest.haidouDir, manifest.gtimgDir].every(
+        (dir) => dir && existsSync(dir),
+      ),
+  )
+}
+
 async function main() {
   const fresh = process.env.FRESH === '1'
-  if (shouldSkipFetch({ cacheExists: existsSync(SOURCES_JSON), fresh })) {
-    const prev = JSON.parse(await readFile(SOURCES_JSON, 'utf8'))
-    console.log(`[fetch] cache exists (fetchedAt=${prev.fetchedAt}); skipping. Set FRESH=1 to force refetch.`)
+  const cached = readManifestSafe()
+  if (shouldSkipFetch({ cacheExists: manifestComplete(cached), fresh })) {
+    console.log(`[fetch] cache complete (fetchedAt=${cached.fetchedAt}); skipping. Set FRESH=1 to force refetch.`)
     return
   }
 
@@ -242,7 +328,7 @@ const isMain = (() => {
 
 if (isMain) {
   await main().catch((err) => {
-    console.error(`[fetch] FAILED: ${err.message}`)
+    console.error(`[fetch] FAILED: ${err?.message || String(err)}`)
     process.exit(1)
   })
 }
