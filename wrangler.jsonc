@@ -1,6 +1,8 @@
 {
   "name": "aramhex-quick-search",
   "compatibility_date": "2026-10-01",
+  // 自定义域：需 Cloudflare 账号内存在 dhc.house zone（custom_domain 会自动建 DNS 记录与证书）
+  "routes": [{ "pattern": "aramhex.dhc.house", "custom_domain": true }],
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"
