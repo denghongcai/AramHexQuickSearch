@@ -19,6 +19,10 @@
 
   /* 底部导航（<lg）总高度：内容高 + iOS 安全区，内容区用它预留 padding */
   --bottom-nav-h: calc(3.5rem + env(safe-area-inset-bottom));
+
+  /* 超宽屏断点：2K 及以上显示器才启用海克斯三列（17px 字号下每列需 ~390px）。
+     必须用 rem——Tailwind 按 rem 值排序断点，px 会让 3xl 排到 2xl 之前导致宽屏下两列获胜 */
+  --breakpoint-3xl: 125rem;
 }
 
 /* 深色唯一主题，不做切换 */

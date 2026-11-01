@@ -6,18 +6,18 @@ import { formatCount } from '@/lib/format'
 import { Panel } from './Panel'
 import { TabBar, tabPanelProps } from './Tabs'
 
-/** 装备徽片（核心装 / 出门装 / 推荐装共用）：18px 游戏图标 + 名称，flex-wrap 防窄栏溢出；
+/** 装备徽片（核心装 / 出门装 / 推荐装共用）：28px 游戏图标 + 名称，flex-wrap 防溢出；
  *  名单内允许重复装备名（真实数据如战士流出门装 双「增幅典籍」），key 需拼下标 */
 function ItemChips({ items }: { items: ReadonlyArray<ItemChip> }) {
   return (
-    <ul className="flex flex-wrap gap-1">
+    <ul className="flex flex-wrap gap-1.5">
       {items.map((item, i) => (
         <li
           key={`${item.name}-${i}`}
-          className="flex items-center gap-1 rounded border border-edge bg-ink px-1.5 py-0.5 text-[11px]"
+          className="flex items-center gap-1.5 rounded-md border border-edge bg-ink px-2 py-1 text-sm"
         >
           {/* gtimg 装备图标；查无此 id（icon null）时不渲染占位，只留名称兜底 */}
-          <GameIcon src={item.icon} size={18} rounded="rounded-sm" />
+          <GameIcon src={item.icon} size={28} rounded="rounded-md" />
           {item.name}
         </li>
       ))}
@@ -25,11 +25,11 @@ function ItemChips({ items }: { items: ReadonlyArray<ItemChip> }) {
   )
 }
 
-/** 小节：窄栏里标签在上、内容在下；空列表给一行占位 */
+/** 小节：标签在上、内容在下；空列表给一行占位 */
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <h3 className="mb-1 text-[11px] font-medium text-muted">{label}</h3>
+      <h3 className="mb-1.5 text-xs font-medium text-muted lg:text-sm">{label}</h3>
       {children}
     </div>
   )
@@ -81,20 +81,20 @@ export function BuildPanel({ builds, className = '' }: { builds: HeroBuild[] | n
             hidden={build.key !== active.key}
             className="min-h-0 flex-1 space-y-2.5 overflow-y-auto"
           >
-            <dl className="grid grid-cols-3 gap-2 rounded-lg bg-ink px-2 py-1.5 text-xs lg:text-[15px]">
+            <dl className="grid grid-cols-3 gap-2 rounded-lg bg-ink px-3 py-2 text-sm lg:text-base">
               <div>
                 <dt className="text-muted">样本</dt>
-                <dd className="mt-0.5 font-tnum tabular-nums">{formatCount(build.sampleCount)}场</dd>
+                <dd className="mt-0.5 font-tnum font-semibold tabular-nums">{formatCount(build.sampleCount)}场</dd>
               </div>
               <div>
                 <dt className="text-muted">胜率</dt>
-                <dd className="mt-0.5 font-tnum font-semibold tabular-nums text-accent">
+                <dd className="mt-0.5 font-tnum text-base font-semibold tabular-nums text-accent lg:text-lg">
                   {build.winRate.toFixed(2)}%
                 </dd>
               </div>
               <div>
                 <dt className="text-muted">登场率</dt>
-                <dd className="mt-0.5 font-tnum tabular-nums">{build.pickRate.toFixed(2)}%</dd>
+                <dd className="mt-0.5 font-tnum font-semibold tabular-nums">{build.pickRate.toFixed(2)}%</dd>
               </div>
             </dl>
             <Field label="核心装">
@@ -108,7 +108,7 @@ export function BuildPanel({ builds, className = '' }: { builds: HeroBuild[] | n
             </Field>
             {build.summary && (
               <Field label="玩法">
-                <p className="whitespace-pre-line text-[11px] leading-relaxed text-muted lg:text-sm">{build.summary}</p>
+                <p className="whitespace-pre-line text-xs leading-relaxed text-muted lg:text-[15px]">{build.summary}</p>
               </Field>
             )}
           </div>

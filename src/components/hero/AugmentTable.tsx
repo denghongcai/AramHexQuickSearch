@@ -45,24 +45,26 @@ function AugmentCell({
   return (
     <div
       title={`场次 ${formatCount(row.games)} · 相对该英雄全体 ${formatDelta(delta)}pp`}
-      className={`flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1 ${row.lowSample ? 'text-muted opacity-60' : ''}`}
+      className={`flex min-w-0 items-center gap-2.5 rounded-md px-1.5 py-1.5 ${row.lowSample ? 'text-muted opacity-60' : ''}`}
     >
-      <span className="w-5 shrink-0 text-right font-tnum text-xs tabular-nums text-muted">{index + 1}</span>
+      <span className="w-6 shrink-0 text-right font-tnum text-sm tabular-nums text-muted">{index + 1}</span>
       <GameIcon
         src={row.icon}
-        size={22}
+        size={28}
         rounded="rounded-md"
-        fallback={<span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${RARITY_DOT[rarity]}`} />}
+        fallback={<span aria-hidden="true" className={`size-3 shrink-0 rounded-full ${RARITY_DOT[rarity]}`} />}
       />
-      <span className="min-w-0 flex-1 truncate">
+      <span className="min-w-0 flex-1 truncate text-[15px] lg:text-[17px]">
         {row.name}
         {row.lowSample && (
           <span className="ml-1 rounded bg-edge/60 px-1 py-px align-middle text-[10px] text-muted">低样本</span>
         )}
       </span>
-      <span className="shrink-0 font-tnum text-[15px] font-semibold tabular-nums">{row.winRate.toFixed(2)}%</span>
+      <span className="shrink-0 font-tnum text-base font-bold tabular-nums lg:text-[18px]">
+        {row.winRate.toFixed(2)}%
+      </span>
       <span
-        className={`w-12 shrink-0 text-right font-tnum text-xs tabular-nums ${row.lowSample ? '' : deltaClass(delta)}`}
+        className={`w-14 shrink-0 text-right font-tnum text-sm tabular-nums ${row.lowSample ? '' : deltaClass(delta)}`}
       >
         {formatDelta(delta)}
       </span>
@@ -99,8 +101,9 @@ export function AugmentTable({ hero, className = '' }: { hero: HeroDetail; class
               ) : (
                 <>
                   <div className="min-h-0 flex-1 overflow-y-auto">
-                    {/* 宽屏多列（lg 两列 / 2xl 三列）压缩纵向空间；单元内名称截断，悬停看完整口径 */}
-                    <div className="grid gap-x-4 gap-y-0.5 lg:grid-cols-2 2xl:grid-cols-3">
+                    {/* 列数随断点真实递进（17px 名称下单列 ~90px 会截成单字）：
+                        lg 单列（名称全宽）→ 2xl 两列 → 3xl(≥2000px，2K 屏) 三列 */}
+                    <div className="grid gap-x-4 gap-y-0.5 2xl:grid-cols-2 3xl:grid-cols-3">
                       {visible.map((row, i) => (
                         <AugmentCell key={row.id} row={row} index={i} overall={hero.ranking.winRate} rarity={key} />
                       ))}
