@@ -121,14 +121,15 @@ export function AugmentTable({ hero, className = '' }: { hero: HeroDetail; class
                         <tr className="text-left text-muted">
                           <HeadCell className="w-8">#</HeadCell>
                           <HeadCell>名称</HeadCell>
-                          <HeadCell className="w-14 text-right">胜率</HeadCell>
+                          {/* 列宽按 lg 15px 字号预留：胜率/±pp 5 位小数（60px）、场次「50.9 万」（80px） */}
+                          <HeadCell className="w-16 text-right">胜率</HeadCell>
                           <HeadCell
-                            className="w-14 text-right"
+                            className="w-16 text-right"
                             title="该海克斯胜率 − 该英雄全体胜率（百分数直接相减）"
                           >
                             ±pp
                           </HeadCell>
-                          <HeadCell className="w-14 text-right">场次</HeadCell>
+                          <HeadCell className="w-20 text-right">场次</HeadCell>
                         </tr>
                       </thead>
                       <tbody>

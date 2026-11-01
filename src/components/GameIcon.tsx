@@ -1,11 +1,12 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 /**
  * 游戏内图标（gtimg 原图）统一渲染：
  * - img 固定像素宽高（style 直写，避免动态类名被 Tailwind 清洗）+ 懒加载 +
  *   异步解码 + 空 alt（装饰图），固定宽高防 CLS；
- * - src 为 null（gtimg 索引缺该 id）时渲染 fallback（调用方给色点等兜底），
- *   绝不放出破图；fallback 缺省渲染为空（等价「无图标只有文字」）。
+ * - src 为 null（gtimg 索引缺该 id）或加载失败（onError，如 gtimg 短暂不可达）
+ *   时渲染 fallback（调用方给色点等兜底），绝不放出破图/空框；
+ *   fallback 缺省渲染为空（等价「无图标只有文字」）。
  */
 export function GameIcon({
   src,
@@ -25,7 +26,13 @@ export function GameIcon({
   /** 可选 hover 提示（如稀有度中文名；缺图时调用方自行在 fallback 上给等价提示） */
   title?: string
 }) {
-  if (!src) return <>{fallback}</>
+  const [errored, setErrored] = useState(false)
+  // 同一组件被列表复用、src 换新 URL 时复位错误态（上一次的失败不该连坐新图标）
+  useEffect(() => {
+    setErrored(false)
+  }, [src])
+
+  if (!src || errored) return <>{fallback}</>
   return (
     <img
       src={src}
@@ -35,6 +42,7 @@ export function GameIcon({
       decoding="async"
       draggable={false}
       referrerPolicy="no-referrer"
+      onError={() => setErrored(true)}
       style={{ width: size, height: size }}
       className={`shrink-0 border border-edge bg-ink object-cover ${rounded} ${className}`}
     />

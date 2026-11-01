@@ -44,10 +44,27 @@ describe('gtimg 图标索引解析（kiwi_augments.json / items.js）', () => {
     expect(icons.has(1134)).toBe(false)
   })
 
-  it('海克斯图标索引结构漂移：非数组 / 条目缺数字 augmentID / id 重复 → 报错', () => {
+  it('海克斯图标索引结构漂移：非数组 / 条目缺数字 augmentID → 报错', () => {
     expect(() => parseGtimgAugmentIcons({ nope: 1 })).toThrow(/数组/)
     expect(() => parseGtimgAugmentIcons([{ small_Icon: 'u.png' }])).toThrow(/augmentID/)
-    expect(() => parseGtimgAugmentIcons([{ augmentID: 1 }, { augmentID: '1' }])).toThrow(/重复/)
+  })
+
+  it('重复 augmentID 容错：warn + 首条图标获胜（与 items 索引口径对齐，不硬失败）', () => {
+    const warn = console.warn
+    const warnings = []
+    console.warn = (msg) => warnings.push(String(msg))
+    try {
+      const icons = parseGtimgAugmentIcons([
+        { augmentID: 7, small_Icon: 'first.png' },
+        { augmentID: '7', small_Icon: 'second.png' },
+        { augmentID: 8, small_Icon: 'only.png' },
+      ])
+      expect(icons.get(7)).toBe('first.png')
+      expect(icons.get(8)).toBe('only.png')
+      expect(warnings.some((m) => m.includes('augmentID=7 重复'))).toBe(true)
+    } finally {
+      console.warn = warn
+    }
   })
 
   it('装备图标：iconPath 完整 URL，缺 id / 缺 iconPath 的条目跳过', () => {

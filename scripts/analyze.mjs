@@ -90,6 +90,9 @@ export function parseGtimgHeroList(json) {
  * 解析 gtimg kiwi_augments.json（海克斯图标索引，纯 JSON 数组）。
  * 每条 {augmentID, small_Icon, large_Icon, …}：small 优先，缺失回落 large，
  * 两者皆缺的条目跳过（该海克斯 icon 输出 null，UI 走色点兜底）。
+ * 容错口径与 parseGtimgItemIcons 对齐：这是纯装饰性数据，不值得为单条脏行
+ * 硬失败——重复 augmentID warn + 首条获胜（first-wins），缺数字 id 的条目跳过；
+ * 只有整体结构漂移（非数组）才报错。
  * @param {unknown} json
  * @returns {Map<number, string>} augmentID → 图标 URL
  */
@@ -98,21 +101,20 @@ export function parseGtimgAugmentIcons(json) {
     throw new Error(`parseGtimgAugmentIcons: kiwi_augments.json 应为数组，收到 ${json == null ? String(json) : typeof json}`)
   }
   const icons = new Map()
-  const seen = new Set()
   for (const entry of json) {
     const id = Number(entry?.augmentID)
     if (!Number.isFinite(id)) {
       throw new Error(`parseGtimgAugmentIcons: 条目缺数字 augmentID: ${JSON.stringify(entry)?.slice(0, 120)}`)
     }
-    if (seen.has(id)) {
-      throw new Error(`parseGtimgAugmentIcons: augmentID=${id} 重复`)
-    }
-    seen.add(id)
     const url = typeof entry.small_Icon === 'string' && entry.small_Icon !== '' ? entry.small_Icon : undefined
     const large = typeof entry.large_Icon === 'string' && entry.large_Icon !== '' ? entry.large_Icon : undefined
     const icon = url ?? large
-    // 两条皆缺图标的条目不进表（消费方查无此 id → icon 输出 null），但 id 仍计入 seen
-    if (icon) icons.set(id, icon)
+    if (!icon) continue // 两条皆缺图标 → 查无此 id → icon 输出 null（色点兜底）
+    if (icons.has(id)) {
+      console.warn(`[analyze] kiwi_augments.json augmentID=${id} 重复，保留首条图标（${icons.get(id)}），忽略 ${icon}`)
+      continue
+    }
+    icons.set(id, icon)
   }
   return icons
 }
