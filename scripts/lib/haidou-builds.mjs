@@ -97,24 +97,30 @@ function metaLookup(itemMeta) {
  *
  * 口径：
  * - core 取 coreProfile.itemIds（权威口径）；缺失时 core 为空数组（该 build
- *   仍进输出，聚类侧自然跳过）。names 与 itemIds 一一对应、顺序一致。
- * - starter/recommended 由 item 对象数组映射为名称数组（同样三级兜底）。
+ *   仍进输出，聚类侧自然跳过）。names/icons 与 itemIds 一一对应、顺序一致。
+ * - starter/recommended 由 item 对象数组映射为 [{name, icon}]（名称同样三级
+ *   兜底；icon 查 gtimg 索引，查无此 id 输出 null，UI 走文字兜底）。
  * - summary 取 gameplay.summary 按换行连接，同一英雄的每个 build 相同
  *   （英雄级文案，不是 build 级）；gameplay 缺失时为空字符串。
  * - pickRate/winRate/sampleCount 原样透传（海斗源口径 0-1 小数）。数值转换在
  *   analyze 编排层统一做（percent2dp），本模块保持源口径，不自行换算。
  *
  * 容错边界：builds 缺失或为空数组 → 返回 []（部分英雄可能没有出装数据）；
- * itemMeta 查不到名称 → 逐级兜底。fail-fast 边界：heroJson 非对象、builds
- * 存在但不是数组、build 条目非对象 → 报错（这些意味着缓存被污染）。
+ * itemMeta 查不到名称 → 逐级兜底；itemIcon 缺省/查不到 → icon 为 null。
+ * fail-fast 边界：heroJson 非对象、builds 存在但不是数组、build 条目非对象 →
+ * 报错（这些意味着缓存被污染）。
  *
  * @param {Object} heroJson 海斗 data/heroes/{slug}.json 的解析结果
  * @param {Object<number, string>|Map<number, string>|null} [itemMeta] buildItemMeta 的产物
+ * @param {((id: number) => string|undefined)|Object<number, string>|Map<number, string>|null} [itemIcon]
+ *   gtimg 装备图标查询表或查询函数（analyze 传后者）；缺省时 icon 恒为 null
  * @returns {Array<{key: string|undefined, name: string|undefined, sampleCount: number,
  *   pickRate: number, winRate: number, summary: string,
- *   core: {itemIds: number[], names: string[]}, starter: string[], recommended: string[]}>}
+ *   core: {itemIds: number[], names: string[], icons: Array<string|null>},
+ *   starter: Array<{name: string, icon: string|null}>,
+ *   recommended: Array<{name: string, icon: string|null}>}>}
  */
-export function parseBuilds(heroJson, itemMeta) {
+export function parseBuilds(heroJson, itemMeta, itemIcon = null) {
   if (heroJson == null || typeof heroJson !== 'object' || Array.isArray(heroJson)) {
     throw new Error(`parseBuilds: heroJson 应为英雄 JSON 对象，收到 ${heroJson === null ? 'null' : typeof heroJson}`)
   }
@@ -124,17 +130,21 @@ export function parseBuilds(heroJson, itemMeta) {
     throw new Error(`parseBuilds: 英雄 ${heroJson.hero?.slug ?? '?'} 的 builds 应为数组，收到 ${typeof builds}`)
   }
   const lookup = metaLookup(itemMeta)
+  const iconOf = typeof itemIcon === 'function' ? itemIcon : metaLookup(itemIcon)
   const summary = Array.isArray(heroJson.gameplay?.summary)
     ? heroJson.gameplay.summary.join('\n')
     : typeof heroJson.gameplay?.summary === 'string'
       ? heroJson.gameplay.summary
       : ''
 
-  /** @type {(items: unknown) => string[]} item 对象数组 → 名称数组（缺 id 的脏条目跳过） */
-  const toNames = (items) =>
+  /**
+   * @type {(items: unknown) => Array<{name: string, icon: string|null}>}
+   * item 对象数组 → [{名称, 图标}]（缺 id 的脏条目跳过；名称三级兜底、图标查无即 null）
+   */
+  const toChips = (items) =>
     (Array.isArray(items) ? items : [])
       .filter((it) => it != null && typeof it === 'object' && Number.isFinite(it.id))
-      .map((it) => resolveName(it.id, it, lookup))
+      .map((it) => ({ name: resolveName(it.id, it, lookup), icon: iconOf(it.id) ?? null }))
 
   return builds.map((b, i) => {
     if (b == null || typeof b !== 'object') {
@@ -148,9 +158,13 @@ export function parseBuilds(heroJson, itemMeta) {
       pickRate: b.pickRate,
       winRate: b.winRate,
       summary,
-      core: { itemIds, names: itemIds.map((id) => resolveName(id, undefined, lookup)) },
-      starter: toNames(b.items?.starter),
-      recommended: toNames(b.items?.recommended),
+      core: {
+        itemIds,
+        names: itemIds.map((id) => resolveName(id, undefined, lookup)),
+        icons: itemIds.map((id) => iconOf(id) ?? null),
+      },
+      starter: toChips(b.items?.starter),
+      recommended: toChips(b.items?.recommended),
     }
   })
 }

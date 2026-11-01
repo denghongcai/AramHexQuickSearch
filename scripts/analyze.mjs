@@ -17,7 +17,10 @@
  *   漂移 → 报错（manifest 声称可用而缓存不一致，必须大声失败）；
  * - gtimg hero_list.js 缺失/结构漂移 → 报错（alias/icon 是硬依赖，无降级路径）；
  * - 单个英雄在 gtimg 无 alias（理论上不该发生）→ 该英雄 alias/icon 为 null + warn，
- *   检索键不含拉丁词项。
+ *   检索键不含拉丁词项；
+ * - gtimg 图标索引（kiwi_augments.json / items.js）缺失/结构漂移 → 报错（图标
+ *   是 Part B 输出契约的一部分）；单条目缺图标/缺 id → 跳过该条，对应行 icon
+ *   输出 null（UI 保留色点/文字兜底）。
  */
 
 import fs from 'node:fs'
@@ -84,15 +87,68 @@ export function parseGtimgHeroList(json) {
 }
 
 /**
+ * 解析 gtimg kiwi_augments.json（海克斯图标索引，纯 JSON 数组）。
+ * 每条 {augmentID, small_Icon, large_Icon, …}：small 优先，缺失回落 large，
+ * 两者皆缺的条目跳过（该海克斯 icon 输出 null，UI 走色点兜底）。
+ * @param {unknown} json
+ * @returns {Map<number, string>} augmentID → 图标 URL
+ */
+export function parseGtimgAugmentIcons(json) {
+  if (!Array.isArray(json)) {
+    throw new Error(`parseGtimgAugmentIcons: kiwi_augments.json 应为数组，收到 ${json == null ? String(json) : typeof json}`)
+  }
+  const icons = new Map()
+  const seen = new Set()
+  for (const entry of json) {
+    const id = Number(entry?.augmentID)
+    if (!Number.isFinite(id)) {
+      throw new Error(`parseGtimgAugmentIcons: 条目缺数字 augmentID: ${JSON.stringify(entry)?.slice(0, 120)}`)
+    }
+    if (seen.has(id)) {
+      throw new Error(`parseGtimgAugmentIcons: augmentID=${id} 重复`)
+    }
+    seen.add(id)
+    const url = typeof entry.small_Icon === 'string' && entry.small_Icon !== '' ? entry.small_Icon : undefined
+    const large = typeof entry.large_Icon === 'string' && entry.large_Icon !== '' ? entry.large_Icon : undefined
+    const icon = url ?? large
+    // 两条皆缺图标的条目不进表（消费方查无此 id → icon 输出 null），但 id 仍计入 seen
+    if (icon) icons.set(id, icon)
+  }
+  return icons
+}
+
+/**
+ * 解析 gtimg items.js（装备图标索引，纯 JSON：{items: [{itemId, iconPath, …}]}）。
+ * iconPath 已是完整 URL（含大乱斗模式装 123430）。条目缺 id/iconPath 跳过——
+ * 索引覆盖 706 件，缺一两条只是该装备图标回落 null，不值得为它硬失败。
+ * @param {{items?: unknown}} json
+ * @returns {Object<number, string>} itemId → 图标 URL
+ */
+export function parseGtimgItemIcons(json) {
+  const items = json?.items
+  if (!Array.isArray(items)) {
+    throw new Error(`parseGtimgItemIcons: items.js 应含 items 数组，收到 ${json == null ? String(json) : typeof json?.items}`)
+  }
+  const icons = {}
+  for (const entry of items) {
+    const id = Number(entry?.itemId)
+    if (!Number.isFinite(id)) continue
+    if (typeof entry.iconPath === 'string' && entry.iconPath !== '') icons[id] = entry.iconPath
+  }
+  return icons
+}
+
+/**
  * 解析海斗 data 层（index.json + items/index.json + heroes/{slug}.json）。
  * slug→heroId 映射以 index.json 的 guides[].id 为准（实测即英雄数字 id）。
  * @param {string} haidouDataDir 含 index.json 的目录（manifest.haidouDir 下的 data/）
+ * @param {(id: number) => string|null} itemIconLookup gtimg 装备图标查询（buildDataset 组装）
  * @returns {{buildsByHero: Map<number, Array>, itemMeta: Object<number, string>,
  *   aliasesByHero: Map<number, string[]>}} aliasesByHero = heroId → 社区别名词项
  *   （guides[].aliases，搜索外号用）；条目缺 aliases 或词项结构漂移时该英雄
  *   不进表（搜索侧优雅回落旧口径，warn 提示，不中断构建）
  */
-function parseHaidou(haidouDataDir) {
+function parseHaidou(haidouDataDir, itemIconLookup) {
   const guides = readJsonFile(path.join(haidouDataDir, 'index.json'))?.guides
   if (!Array.isArray(guides)) {
     throw new Error(`haidou index.json 缺少 guides 数组: ${path.join(haidouDataDir, 'index.json')}`)
@@ -141,7 +197,7 @@ function parseHaidou(haidouDataDir) {
         `haidou guides 的 heroId=${heroId}（slug=${slug}）与英雄文件内的 hero.id=${JSON.stringify(heroFileId)} 不一致，拒绝静默关联`,
       )
     }
-    buildsByHero.set(heroId, parseBuilds(heroJson, itemMeta))
+    buildsByHero.set(heroId, parseBuilds(heroJson, itemMeta, itemIconLookup))
   }
   if (missing > 0) {
     console.warn(`[analyze] haidou ${missing}/${guides.length} 个英雄文件缺失（fetch 侧 FAILED.json 应有记录）`)
@@ -184,8 +240,9 @@ function buildSpells(combos) {
  * 单英雄海克斯按稀有度分组，组内 winRate 降序；lowSample 仅 true 时输出（省体积）。
  * excluded_augments（1337/3176 等统计失真项）在英雄明细里同样排除——真实数据
  * 上游已不含这些 id，这里是防御：上游口径回退时不让脏行悄悄进产物。
+ * 图标来自 gtimg kiwi 索引（small 优先）；查无此 id 输出 null（UI 色点兜底）。
  */
-function buildHeroAugments(heroId, entries, augmentsMeta, excludedAugmentIds) {
+function buildHeroAugments(heroId, entries, augmentsMeta, excludedAugmentIds, augmentIcons) {
   const groups = {}
   for (const rarity of AUGMENT_RARITIES) groups[rarity] = []
   const excluded = new Set((excludedAugmentIds ?? []).map(Number))
@@ -200,7 +257,14 @@ function buildHeroAugments(heroId, entries, augmentsMeta, excludedAugmentIds) {
     if (!bucket) {
       throw new Error(`英雄 ${heroId} 的海克斯 id=${id} 稀有度未知: ${JSON.stringify(meta.rarity)}`)
     }
-    const row = { id, name: meta.name, games: s.games, wins: s.wins, winRate: toPercent2dp(s.winRate) }
+    const row = {
+      id,
+      name: meta.name,
+      icon: augmentIcons?.get(id) ?? null,
+      games: s.games,
+      wins: s.wins,
+      winRate: toPercent2dp(s.winRate),
+    }
     if (s.lowSample) row.lowSample = true
     bucket.push(row)
   }
@@ -233,10 +297,22 @@ export function buildDataset(cacheDirs, manifest = {}) {
 
   // 1-3. AramHex 解析 → 海克斯跨英雄聚合 → 英雄分档
   const aramhex = parseAramhex(cacheDirs.aramhexDir)
+  // 3b. gtimg 图标索引：海克斯（kiwi，small 优先）与装备（items.js）两张查询表
+  const augmentIcons = parseGtimgAugmentIcons(readJsonFile(path.join(cacheDirs.gtimgDir, 'kiwi_augments.json')))
+  const itemIcons = parseGtimgItemIcons(readJsonFile(path.join(cacheDirs.gtimgDir, 'items.js')))
+  // 装备图标查询（parseHaidou/家族聚类共用）；查无此装备兜底 null
+  const itemIconLookup = (id) => itemIcons[id] ?? null
   const augments = aggregateAugments(aramhex.heroAugments, aramhex.augments, aramhex.excludedAugmentIds).map((row) => ({
-    ...row,
+    id: row.id,
+    name: row.name,
+    icon: augmentIcons.get(row.id) ?? null,
+    rarity: row.rarity,
+    games: row.games,
+    wins: row.wins,
     winRate: toPercent2dp(row.winRate),
     pickRate: toPercent2dp(row.pickRate),
+    heroCount: row.heroCount,
+    rank: row.rank,
   }))
   const tiers = computeTiers(aramhex.heroes)
 
@@ -245,7 +321,7 @@ export function buildDataset(cacheDirs, manifest = {}) {
   let itemMeta = null
   let aliasesByHero = null
   if (cacheDirs.haidouDir != null) {
-    ;({ buildsByHero, itemMeta, aliasesByHero } = parseHaidou(cacheDirs.haidouDir))
+    ;({ buildsByHero, itemMeta, aliasesByHero } = parseHaidou(cacheDirs.haidouDir, itemIconLookup))
   }
 
   // 5. gtimg hero_list.js → alias/icon 索引（拉丁名唯一来源）
@@ -288,7 +364,7 @@ export function buildDataset(cacheDirs, manifest = {}) {
         buildCount: builds ? builds.length : 0,
         bands: buildBands(h, aramhex.bands),
         spells: buildSpells(aramhex.spells[h.id]),
-        augments: buildHeroAugments(h.id, aramhex.heroAugments[h.id], aramhex.augments, aramhex.excludedAugmentIds),
+        augments: buildHeroAugments(h.id, aramhex.heroAugments[h.id], aramhex.augments, aramhex.excludedAugmentIds, augmentIcons),
         builds,
       }
     })
@@ -305,6 +381,8 @@ export function buildDataset(cacheDirs, manifest = {}) {
       id: f.id,
       items: f.items,
       names: f.items.map((id) => itemMeta?.[id] ?? String(id)),
+      // 与 names 平行的图标数组；gtimg 索引查无此装备兜底 null
+      icons: f.items.map((id) => itemIconLookup(id)),
       buildCount: f.buildCount,
     })),
     itemFamily: clustered.itemFamily,

@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
+import { GameIcon } from '@/components/GameIcon'
 import { TierBar } from '@/components/TierBar'
 import {
   useAugments,
@@ -82,17 +83,26 @@ function TopHeroRow({ hero }: { hero: HeroRow }) {
   )
 }
 
-/** Top10 海克斯迷你榜行：rank/名称/稀有度色点/胜率/场次 */
+/** Top10 海克斯迷你榜行：rank/游戏图标/名称/胜率/场次（缺图回落稀有度色点） */
 function TopAugmentRow({ augment }: { augment: AugmentRow }) {
+  const rarityLabel = RARITY_LABEL[augment.rarity] ?? augment.rarity
   return (
     <li className="flex items-center gap-2 px-1.5 py-0.5 text-xs">
       <span className="w-5 shrink-0 text-right font-tnum text-[11px] tabular-nums text-muted">
         {augment.rank}
       </span>
-      <span
-        title={RARITY_LABEL[augment.rarity] ?? augment.rarity}
-        aria-label={RARITY_LABEL[augment.rarity] ?? augment.rarity}
-        className={`size-2 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`}
+      <GameIcon
+        src={augment.icon}
+        size={20}
+        rounded="rounded-md"
+        title={rarityLabel}
+        fallback={
+          <span
+            title={rarityLabel}
+            aria-label={rarityLabel}
+            className={`size-2 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`}
+          />
+        }
       />
       <span className="min-w-0 flex-1 truncate">{augment.name}</span>
       <span className="w-11 shrink-0 text-right font-tnum tabular-nums">{augment.winRate}%</span>
@@ -223,7 +233,22 @@ export function OverviewPage() {
                   key={family.id}
                   className="flex items-center gap-2 border-b border-edge/40 px-1.5 py-0.5 text-xs last:border-b-0"
                 >
-                  <span className="min-w-0 flex-1 truncate">{family.names.slice(0, 3).join(' + ')}</span>
+                  {/* 家族成员小图标（16px）+ 名称；icons 与 names 平行、查无兜底 null */}
+                  <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                    {family.names.slice(0, 3).map((name, i) => (
+                      <span key={`${family.id}-${i}`} className="flex min-w-0 items-center gap-1">
+                        {i > 0 && (
+                          <span aria-hidden="true" className="shrink-0 text-muted">
+                            +
+                          </span>
+                        )}
+                        <GameIcon src={family.icons[i] ?? null} size={16} rounded="rounded-sm" />
+                        <span className="truncate" title={name}>
+                          {name}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
                   <span className="shrink-0 text-muted">{family.items.length} 件</span>
                   <span className="w-14 shrink-0 text-right font-tnum tabular-nums text-muted">
                     {family.buildCount} 套

@@ -61,6 +61,16 @@ const GTIMG_FILES = [
     url: 'https://game.gtimg.cn/images/lol/act/img/js/summonerskillList/summonerskill_list.js',
     file: 'summonerskill_list.js',
   },
+  // 海克斯图标索引（纯 JSON 数组：augmentID / small_Icon / large_Icon / …）
+  {
+    url: 'https://game.gtimg.cn/images/lol/act/img/js/kiwi/kiwi_augments.json',
+    file: 'kiwi_augments.json',
+  },
+  // 装备图标索引（纯 JSON：items[].itemId / iconPath 完整 URL，含大乱斗模式装）
+  {
+    url: 'https://game.gtimg.cn/images/lol/act/img/js/items/items.js',
+    file: 'items.js',
+  },
 ]
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -278,14 +288,24 @@ function readManifestSafe() {
   }
 }
 
-/** A cache is only skippable when all three source dirs still exist on disk. */
+/**
+ * A cache is only skippable when all three source dirs still exist on disk AND
+ * every gtimg file (incl. the icon indexes added later) is present — an old
+ * cache from before the icon sources existed must refetch, or analyze would
+ * die on the missing files.
+ */
 function manifestComplete(manifest) {
-  return Boolean(
+  const dirsOk = Boolean(
     manifest &&
       [manifest.aramhexDir, manifest.haidouDir, manifest.gtimgDir].every(
         (dir) => dir && existsSync(dir),
       ),
   )
+  const gtimgFilesOk = Boolean(
+    manifest?.gtimgDir &&
+      GTIMG_FILES.every(({ file }) => existsSync(path.join(manifest.gtimgDir, file))),
+  )
+  return dirsOk && gtimgFilesOk
 }
 
 async function main() {

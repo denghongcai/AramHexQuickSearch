@@ -1,0 +1,34 @@
+[
+  {
+    "augmentID": 1001,
+    "name_en": "ARAM_ImTheJuggernaut",
+    "name_cn": "泰坦的坚决",
+    "level": "kPrismatic",
+    "large_Icon": "https://game.gtimg.cn/images/lol/act/img/rune/iamthejuggernaut_large.png",
+    "small_Icon": "https://game.gtimg.cn/images/lol/act/img/rune/iamthejuggernaut_small.png"
+  },
+  {
+    "augmentID": 1002,
+    "name_en": "ARAM_AetherStorm",
+    "name_cn": "尖端发明家",
+    "level": "kGold",
+    "large_Icon": "https://game.gtimg.cn/images/lol/act/img/rune/aetherstorm_large.png",
+    "small_Icon": ""
+  },
+  {
+    "augmentID": 1134,
+    "name_en": "ARAM_Unbreakable",
+    "name_cn": "不破之盾",
+    "level": "kSilver",
+    "large_Icon": "",
+    "small_Icon": ""
+  },
+  {
+    "augmentID": 1337,
+    "name_en": "ARAM_Excluded",
+    "name_cn": "统计失真项（aramhex excluded）",
+    "level": "kPrismatic",
+    "large_Icon": "https://game.gtimg.cn/images/lol/act/img/rune/excluded_large.png",
+    "small_Icon": "https://game.gtimg.cn/images/lol/act/img/rune/excluded_small.png"
+  }
+]

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { GameIcon } from '@/components/GameIcon'
 import type { HeroAugmentRow, HeroDetail } from '@/lib/api'
 import { deltaClass, formatDelta, ppDelta } from '@/lib/delta'
 import { formatCount } from '@/lib/format'
@@ -26,18 +27,40 @@ function HeadCell({ children, className = '', title }: { children: string; class
   )
 }
 
-/** 单行：# 名称 胜率 ±pp 场次；lowSample 整行灰显降权（±pp 不参与分色） */
-function AugmentRowLine({ row, index, overall }: { row: HeroAugmentRow; index: number; overall: number }) {
+/** 单行：# 图标+名称 胜率 ±pp 场次；lowSample 整行灰显降权（±pp 不参与分色） */
+function AugmentRowLine({
+  row,
+  index,
+  overall,
+  rarity,
+}: {
+  row: HeroAugmentRow
+  index: number
+  overall: number
+  /** 当前稀有度 tab（icon 缺失时色点兜底用） */
+  rarity: keyof HeroDetail['augments']
+}) {
   const delta = ppDelta(row.winRate, overall)
 
   return (
     <tr className={`border-t border-edge/40 ${row.lowSample ? 'text-muted opacity-60' : ''}`}>
       <td className="px-1.5 py-1 text-right font-tnum tabular-nums text-muted">{index + 1}</td>
-      <td className="truncate px-1.5 py-1">
-        {row.name}
-        {row.lowSample && (
-          <span className="ml-1 rounded bg-edge/60 px-1 py-px align-middle text-[10px] text-muted">低样本</span>
-        )}
+      <td className="px-1.5 py-1">
+        <div className="flex items-center gap-1.5">
+          {/* 游戏内图标 22px；gtimg 索引缺该 id 时回落稀有度色点 */}
+          <GameIcon
+            src={row.icon}
+            size={22}
+            rounded="rounded-md"
+            fallback={<span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${RARITY_DOT[rarity]}`} />}
+          />
+          <span className="min-w-0 flex-1 truncate">
+            {row.name}
+            {row.lowSample && (
+              <span className="ml-1 rounded bg-edge/60 px-1 py-px align-middle text-[10px] text-muted">低样本</span>
+            )}
+          </span>
+        </div>
       </td>
       <td className="px-1.5 py-1 text-right font-tnum tabular-nums">{row.winRate.toFixed(2)}%</td>
       <td
@@ -101,7 +124,7 @@ export function AugmentTable({ hero, className = '' }: { hero: HeroDetail; class
                     </thead>
                     <tbody>
                       {rows.map((row, i) => (
-                        <AugmentRowLine key={row.id} row={row} index={i} overall={hero.ranking.winRate} />
+                        <AugmentRowLine key={row.id} row={row} index={i} overall={hero.ranking.winRate} rarity={key} />
                       ))}
                     </tbody>
                   </table>

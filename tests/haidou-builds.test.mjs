@@ -64,10 +64,25 @@ describe('parseBuilds', () => {
     expect(heroA.builds[1].items.core.map((it) => it.id)).toEqual([3089, 3157, 4645])
   })
 
-  it('starter/recommended 取 item 对象数组映射为名称数组', () => {
+  it('starter/recommended 取 item 对象数组映射为 [{name, icon}]（icon 缺省时 null）', () => {
     const crit = buildsA[0]
-    expect(crit.starter).toEqual(['多兰之刃'])
-    expect(crit.recommended).toEqual(['育恩塔尔荒野箭', '海妖杀手', '血手', '狂战士胫甲', '多米尼克领主的致意'])
+    expect(crit.starter).toEqual([{ name: '多兰之刃', icon: null }])
+    expect(crit.recommended).toEqual(
+      ['育恩塔尔荒野箭', '海妖杀手', '血手', '狂战士胫甲', '多米尼克领主的致意'].map((name) => ({ name, icon: null })),
+    )
+  })
+
+  it('传入图标查询表/函数：core.icons 与 itemIds 平行，starter 图标按 id 查询；查无此 id 兜底 null', () => {
+    const icons = { 3032: 'https://gtimg/3032.png', 1055: 'https://gtimg/1055.png' }
+    const withIcons = parseBuilds(heroA, itemMeta, (id) => icons[id])
+    const crit = withIcons[0]
+    expect(crit.core.icons).toEqual(['https://gtimg/3032.png', null, null])
+    expect(crit.starter).toEqual([{ name: '多兰之刃', icon: 'https://gtimg/1055.png' }])
+    // 对象形态与 Map 形态同样接受（与 itemMeta 同款口径）
+    expect(parseBuilds(heroA, itemMeta, icons)[0].core.icons).toEqual(crit.core.icons)
+    expect(parseBuilds(heroA, itemMeta, new Map([[3032, 'u.png']]))[0].core.icons[0]).toBe('u.png')
+    // itemIcon 缺省（不传 / null）→ icon 恒为 null，名称解析不受影响
+    expect(parseBuilds(heroA, itemMeta, null)[0].core.icons).toEqual([null, null, null])
   })
 
   it('summary 取 gameplay.summary 按 \\n 连接，同一英雄每个 build 相同', () => {
@@ -81,10 +96,10 @@ describe('parseBuilds', () => {
     expect(buildsB[2].core.itemIds).toEqual([3742, 3065, 1043])
     expect(buildsB[2].core.names).toEqual(['兰顿之兆', '振奋盔甲', '1043'])
     // 1055/1054 不在 meta 里，但 starter 对象自带 name → 用对象 name
-    expect(buildsB[0].starter).toEqual(['多兰之刃'])
-    expect(buildsB[2].starter).toEqual(['多兰之盾'])
+    expect(buildsB[0].starter).toEqual([{ name: '多兰之刃', icon: null }])
+    expect(buildsB[2].starter).toEqual([{ name: '多兰之盾', icon: null }])
     // 2003 既不在 meta 里也没有 name 字段 → id 字符串
-    expect(buildsA[2].starter).toEqual(['多兰之刃', '2003'])
+    expect(buildsA[2].starter).toEqual([{ name: '多兰之刃', icon: null }, { name: '2003', icon: null }])
   })
 
   it('itemMeta 也接受 Map；缺省（null/undefined）时全部走兜底', () => {
@@ -100,7 +115,7 @@ describe('parseBuilds', () => {
     const buildsB = parseBuilds(heroB, itemMeta)
     expect(buildsB).toHaveLength(4)
     expect(buildsB[3].key).toBe('situational')
-    expect(buildsB[3].core).toEqual({ itemIds: [], names: [] })
+    expect(buildsB[3].core).toEqual({ itemIds: [], names: [], icons: [] })
   })
 
   it('builds 缺失或为空数组 → 返回 [] 不抛；gameplay 缺失 → summary 为空字符串', () => {

@@ -54,6 +54,8 @@ export interface HeroesPayload {
 export interface AugmentRow {
   id: number
   name: string
+  /** 游戏内图标（gtimg，small 档优先）；gtimg 索引缺该 id 时为 null（UI 色点兜底） */
+  icon: string | null
   rarity: 'prismatic' | 'gold' | 'silver'
   games: number
   wins: number
@@ -74,6 +76,8 @@ export interface ItemFamily {
   id: number
   items: number[]
   names: string[]
+  /** 与 names 平行的图标数组（gtimg iconPath）；查无此装备兜底 null */
+  icons: Array<string | null>
   /** 核心位含本簇至少一件物品的出装 build 数 */
   buildCount: number
 }
@@ -106,11 +110,19 @@ export interface HeroSpellRow {
 export interface HeroAugmentRow {
   id: number
   name: string
+  /** 游戏内图标（gtimg，small 档优先）；gtimg 索引缺该 id 时为 null（UI 色点兜底） */
+  icon: string | null
   games: number
   wins: number
   winRate: number
   /** 样本过低（构建期阈值打标），UI 需灰显降权 */
   lowSample?: boolean
+}
+
+/** 装备徽片：名称 + 图标（出门装/推荐装/核心装共用；图标可 null） */
+export interface ItemChip {
+  name: string
+  icon: string | null
 }
 
 /** hero/{id}.json：一个出装流派（winRate/pickRate 与 ranking 同口径的百分数 2 位小数） */
@@ -126,11 +138,11 @@ export interface HeroBuild {
   winRate: number
   /** 玩法 tips，\n 分段 */
   summary: string
-  core: { itemIds: number[]; names: string[] }
-  /** 出门装名列表 */
-  starter: string[]
+  core: { itemIds: number[]; names: string[]; /** 与 itemIds/names 平行；查无此装备为 null */ icons: Array<string | null> }
+  /** 出门装（顺序即海斗源顺序） */
+  starter: ItemChip[]
   /** 推荐装名列表（按合成顺序） */
-  recommended: string[]
+  recommended: ItemChip[]
 }
 
 /** hero/{id}.json：单英雄详情全量（Task 11 数据契约，不含 tier——色片由英雄榜补） */

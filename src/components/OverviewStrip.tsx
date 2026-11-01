@@ -1,8 +1,9 @@
 import { Link } from '@tanstack/react-router'
+import { GameIcon } from '@/components/GameIcon'
+import { TierBar } from '@/components/TierBar'
 import { useAugments, useHeroes, useMeta } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { RARITY_DOT, RARITY_LABEL } from '@/lib/rarity'
-import { TierBar } from '@/components/TierBar'
 
 /**
  * 移动端精简总览条（Task 8 移动 IA 决策的落地，Task 10 实现）：
@@ -35,22 +36,33 @@ export function OverviewStrip({ className = '' }: { className?: string }) {
       <div className="mt-2 space-y-2">
         <TierBar heroes={heroesData?.heroes ?? []} />
         <ul className="flex flex-wrap gap-1.5">
-          {topAugments.map((augment) => (
-            <li key={augment.id}>
-              <Link
-                to="/augments"
-                className="flex max-w-full items-center gap-1 rounded-full border border-edge bg-ink px-2 py-0.5 text-[11px] hover:border-accent"
-              >
-                <span
-                  title={RARITY_LABEL[augment.rarity] ?? augment.rarity}
-                  aria-label={RARITY_LABEL[augment.rarity] ?? augment.rarity}
-                  className={`size-1.5 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`}
-                />
-                <span className="max-w-28 truncate">{augment.name}</span>
-                <span className="shrink-0 font-tnum tabular-nums text-muted">{augment.winRate}%</span>
-              </Link>
-            </li>
-          ))}
+          {topAugments.map((augment) => {
+            const rarityLabel = RARITY_LABEL[augment.rarity] ?? augment.rarity
+            return (
+              <li key={augment.id}>
+                <Link
+                  to="/augments"
+                  className="flex max-w-full items-center gap-1 rounded-full border border-edge bg-ink px-2 py-0.5 text-[11px] hover:border-accent"
+                >
+                  {/* 游戏内图标 20px（迷你榜口径）；缺图回落稀有度色点 */}
+                  <GameIcon
+                    src={augment.icon}
+                    size={20}
+                    rounded="rounded-full"
+                    fallback={
+                      <span
+                        title={rarityLabel}
+                        aria-label={rarityLabel}
+                        className={`size-1.5 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`}
+                      />
+                    }
+                  />
+                  <span className="max-w-28 truncate">{augment.name}</span>
+                  <span className="shrink-0 font-tnum tabular-nums text-muted">{augment.winRate}%</span>
+                </Link>
+              </li>
+            )
+          })}
         </ul>
       </div>
     </details>

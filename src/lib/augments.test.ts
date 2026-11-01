@@ -5,7 +5,7 @@ import { countByRarity, filterAugments, parseRarity, RARITIES } from './augments
 
 /** 造一条最小海克斯行（只带过滤逻辑用到的字段） */
 function row(id: number, rarity: AugmentRow['rarity'], rank: number): AugmentRow {
-  return { id, name: `海克斯${id}`, rarity, games: 100, wins: 50, winRate: 50, pickRate: 1, heroCount: 3, rank }
+  return { id, name: `海克斯${id}`, icon: null, rarity, games: 100, wins: 50, winRate: 50, pickRate: 1, heroCount: 3, rank }
 }
 
 const FIXTURE: AugmentRow[] = [

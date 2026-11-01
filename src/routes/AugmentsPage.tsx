@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useRouter, useSearch } from '@tanstack/react-router'
 import { countByRarity, filterAugments, parseRarity, RARITIES, type Rarity } from '@/lib/augments'
+import { GameIcon } from '@/components/GameIcon'
 import { useAugments, type AugmentRow } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { RARITY_DOT, RARITY_LABEL, RARITY_TEXT } from '@/lib/rarity'
@@ -29,15 +30,18 @@ function AugmentTr({ augment }: { augment: AugmentRow }) {
     <tr className="hover:bg-edge/20">
       <td className={`${TD} text-right font-tnum text-xs tabular-nums text-muted`}>{augment.rank}</td>
       <td className={TD}>
-        <span
-          role="img"
-          aria-label={label}
-          title={label}
-          className={`mx-auto block size-2.5 rounded-full ${RARITY_DOT[augment.rarity]}`}
-        />
-      </td>
-      <td className={`${TD} truncate`} title={augment.name}>
-        {augment.name}
+        <div className="flex items-center gap-2">
+          {/* 游戏内图标 22px；gtimg 索引缺该 id 时回落稀有度色点 */}
+          <GameIcon
+            src={augment.icon}
+            size={22}
+            rounded="rounded-md"
+            fallback={<span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`} />}
+          />
+          <span className="min-w-0 truncate" title={augment.name}>
+            {augment.name}
+          </span>
+        </div>
       </td>
       <td className={`${TD} text-xs ${RARITY_TEXT[augment.rarity]}`}>{label}</td>
       <td className={`${TD} text-right font-tnum tabular-nums`}>{augment.winRate}%</td>
@@ -57,9 +61,12 @@ function AugmentCard({ augment }: { augment: AugmentRow }) {
       <span className="w-7 shrink-0 text-right font-tnum text-xs tabular-nums text-muted">
         #{augment.rank}
       </span>
-      <span
-        aria-hidden="true"
-        className={`size-2.5 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`}
+      {/* 游戏内图标 28px（卡片行高更大）；缺图回落稀有度色点 */}
+      <GameIcon
+        src={augment.icon}
+        size={28}
+        rounded="rounded-md"
+        fallback={<span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`} />}
       />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{augment.name}</p>
@@ -163,9 +170,6 @@ export function AugmentsPage() {
               <thead>
                 <tr>
                   <th className={`${TH} w-10 text-right`}>#</th>
-                  <th className={`${TH} w-8`}>
-                    <span className="sr-only">稀有度色标</span>
-                  </th>
                   <th className={TH}>名称</th>
                   <th className={`${TH} w-16`}>稀有度</th>
                   <th className={`${TH} w-[4.5rem] text-right`}>胜率</th>

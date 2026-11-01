@@ -4,7 +4,7 @@ import path from 'node:path'
 
 import { afterAll, describe, expect, it } from 'vitest'
 
-import { buildDataset, toPercent2dp, writeDataset } from '../scripts/analyze.mjs'
+import { buildDataset, parseGtimgAugmentIcons, parseGtimgItemIcons, toPercent2dp, writeDataset } from '../scripts/analyze.mjs'
 import { buildItemMeta, parseBuilds } from '../scripts/lib/haidou-builds.mjs'
 import { buildSearchKeys } from '../scripts/lib/search.mjs'
 
@@ -33,6 +33,33 @@ describe('toPercent2dp（全站唯一百分数换算）', () => {
     expect(() => toPercent2dp(Number.NaN)).toThrow(/有限/)
     expect(() => toPercent2dp(Number.POSITIVE_INFINITY)).toThrow(/有限/)
     expect(() => toPercent2dp(undefined)).toThrow(/有限/)
+  })
+})
+
+describe('gtimg 图标索引解析（kiwi_augments.json / items.js）', () => {
+  it('海克斯图标：small 优先，缺失回落 large，两者皆缺不进表（icon 输出 null）', () => {
+    const icons = parseGtimgAugmentIcons(JSON.parse(fs.readFileSync(path.join(FIXTURES, 'gtimg/kiwi_augments.json'), 'utf8')))
+    expect(icons.get(1001)).toBe('https://game.gtimg.cn/images/lol/act/img/rune/iamthejuggernaut_small.png')
+    expect(icons.get(1002)).toBe('https://game.gtimg.cn/images/lol/act/img/rune/aetherstorm_large.png')
+    expect(icons.has(1134)).toBe(false)
+  })
+
+  it('海克斯图标索引结构漂移：非数组 / 条目缺数字 augmentID / id 重复 → 报错', () => {
+    expect(() => parseGtimgAugmentIcons({ nope: 1 })).toThrow(/数组/)
+    expect(() => parseGtimgAugmentIcons([{ small_Icon: 'u.png' }])).toThrow(/augmentID/)
+    expect(() => parseGtimgAugmentIcons([{ augmentID: 1 }, { augmentID: '1' }])).toThrow(/重复/)
+  })
+
+  it('装备图标：iconPath 完整 URL，缺 id / 缺 iconPath 的条目跳过', () => {
+    const icons = parseGtimgItemIcons(JSON.parse(fs.readFileSync(path.join(FIXTURES, 'gtimg/items.js'), 'utf8')))
+    expect(icons[3032]).toBe('https://game.gtimg.cn/images/lol/act/img/item/3032.png')
+    expect(icons[123430]).toBe('https://game.gtimg.cn/images/lol/act/img/item/123430.png')
+    expect(1043 in icons).toBe(false)
+    expect(() => parseGtimgItemIcons({ items: [{ itemId: 'x', iconPath: 'u' }, { itemId: 1 }] })).not.toThrow()
+  })
+
+  it('装备图标索引结构漂移（无 items 数组）→ 报错', () => {
+    expect(() => parseGtimgItemIcons({})).toThrow(/items/)
   })
 })
 
@@ -175,23 +202,33 @@ describe('buildDataset → hero 明细', () => {
     expect(none.augments).toEqual({ prismatic: [], gold: [], silver: [] })
   })
 
-  it('augments 三稀有度分组、组内 winRate 降序；lowSample 仅在 true 时输出', () => {
+  it('augments 三稀有度分组、组内 winRate 降序；lowSample 仅在 true 时输出；行带 gtimg 图标', () => {
     const yasuo = dataset.heroes[0]
     expect(Object.keys(yasuo.augments)).toEqual(['prismatic', 'gold', 'silver'])
     expect(yasuo.augments.prismatic).toEqual([])
     expect(yasuo.augments.gold).toEqual([
-      { id: 1002, name: '尖端发明家', games: 1200, wins: 650, winRate: 54.17, lowSample: true },
+      {
+        id: 1002,
+        name: '尖端发明家',
+        icon: 'https://game.gtimg.cn/images/lol/act/img/rune/aetherstorm_large.png', // small 缺失回落 large
+        games: 1200,
+        wins: 650,
+        winRate: 54.17,
+        lowSample: true,
+      },
     ])
-    // low_sample: false → 不输出 lowSample 键（省体积）
-    expect(yasuo.augments.silver).toEqual([{ id: 1134, name: '不破之盾', games: 50000, wins: 29000, winRate: 58 }])
+    // low_sample: false → 不输出 lowSample 键（省体积）；1134 无图标 → null
+    expect(yasuo.augments.silver).toEqual([
+      { id: 1134, name: '不破之盾', icon: null, games: 50000, wins: 29000, winRate: 58 },
+    ])
     expect('lowSample' in yasuo.augments.silver[0]).toBe(false)
 
     const lee = dataset.heroes[1]
     expect(lee.augments.prismatic).toEqual([
-      { id: 1001, name: '泰坦的坚决', games: 9000, wins: 4700, winRate: 52.22 },
+      { id: 1001, name: '泰坦的坚决', icon: 'https://game.gtimg.cn/images/lol/act/img/rune/iamthejuggernaut_small.png', games: 9000, wins: 4700, winRate: 52.22 },
     ])
     expect(lee.augments.silver).toEqual([
-      { id: 1134, name: '不破之盾', games: 800, wins: 400, winRate: 50, lowSample: true },
+      { id: 1134, name: '不破之盾', icon: null, games: 800, wins: 400, winRate: 50, lowSample: true },
     ])
     expect(lee.augments.gold).toEqual([])
   })
@@ -208,7 +245,9 @@ describe('buildDataset → hero 明细', () => {
   it('builds = parseBuilds 输出 + winRate/pickRate 统一转 percent2dp（其余字段原样）', () => {
     const itemMeta = buildItemMeta(JSON.parse(fs.readFileSync(path.join(FIXTURES, 'haidou/items/index.json'), 'utf8')))
     const yasuoJson = JSON.parse(fs.readFileSync(path.join(FIXTURES, 'haidou/heroes/demo-yasuo.json'), 'utf8'))
-    const expected = parseBuilds(yasuoJson, itemMeta).map((b) => ({
+    // analyze 给 parseBuilds 传的是 gtimg 装备图标查询（与产物逐字段对齐）
+    const itemIcons = parseGtimgItemIcons(JSON.parse(fs.readFileSync(path.join(FIXTURES, 'gtimg/items.js'), 'utf8')))
+    const expected = parseBuilds(yasuoJson, itemMeta, (id) => itemIcons[id] ?? null).map((b) => ({
       ...b,
       winRate: toPercent2dp(b.winRate),
       pickRate: toPercent2dp(b.pickRate),
@@ -216,6 +255,15 @@ describe('buildDataset → hero 明细', () => {
     expect(dataset.heroes[0].builds).toEqual(expected)
     // 钉死换算值：crit build 0.6/0.5 → 60/50，meta.units 的 percent2dp 对 builds 同样成立
     expect(dataset.heroes[0].builds[0]).toMatchObject({ key: 'crit', winRate: 60, pickRate: 50, sampleCount: 1000 })
+    // 图标契约：core.icons 与 itemIds 平行；starter/recommended 是 [{name, icon}]
+    expect(dataset.heroes[0].builds[0].core.icons).toEqual([
+      'https://game.gtimg.cn/images/lol/act/img/item/3032.png',
+      'https://game.gtimg.cn/images/lol/act/img/item/6672.png',
+      'https://game.gtimg.cn/images/lol/act/img/item/3072.png',
+    ])
+    expect(dataset.heroes[0].builds[0].starter).toEqual([
+      { name: '多兰之刃', icon: 'https://game.gtimg.cn/images/lol/act/img/item/1055.png' },
+    ])
     // 海斗索引里没有的英雄（fixture: demo-missing 文件缺失）→ builds null
     expect(dataset.heroes.find((h) => h.id === 1).builds).toBeNull()
   })
@@ -256,11 +304,12 @@ describe('buildDataset → hero 明细', () => {
 })
 
 describe('buildDataset → augments（全量榜单）', () => {
-  it('聚合行按 rank 排列，winRate/pickRate 转百分数2位，保留 heroCount/rarity', () => {
+  it('聚合行按 rank 排列，winRate/pickRate 转百分数2位，保留 heroCount/rarity，行带图标', () => {
     expect(dataset.augments).toEqual([
       {
         id: 1134,
         name: '不破之盾',
+        icon: null, // kiwi 索引 small/large 皆缺 → null（UI 色点兜底）
         rarity: 'silver',
         games: 50800,
         wins: 29400,
@@ -272,6 +321,7 @@ describe('buildDataset → augments（全量榜单）', () => {
       {
         id: 1002,
         name: '尖端发明家',
+        icon: 'https://game.gtimg.cn/images/lol/act/img/rune/aetherstorm_large.png',
         rarity: 'gold',
         games: 1200,
         wins: 650,
@@ -283,6 +333,7 @@ describe('buildDataset → augments（全量榜单）', () => {
       {
         id: 1001,
         name: '泰坦的坚决',
+        icon: 'https://game.gtimg.cn/images/lol/act/img/rune/iamthejuggernaut_small.png',
         rarity: 'prismatic',
         games: 9000,
         wins: 4700,
@@ -296,19 +347,28 @@ describe('buildDataset → augments（全量榜单）', () => {
 })
 
 describe('buildDataset → families', () => {
-  it('跨英雄聚类，家族附物品名（itemMeta 解析），全量输出不过滤', () => {
+  it('跨英雄聚类，家族附物品名（itemMeta 解析）+ 图标（gtimg），全量输出不过滤', () => {
+    const itemIcon = (id) => `https://game.gtimg.cn/images/lol/act/img/item/${id}.png`
     expect(dataset.families.families).toEqual([
       {
         id: 3032,
         items: [3032, 3072, 6672],
         names: ['育恩塔尔荒野箭', '血手', '海妖杀手'],
+        icons: [itemIcon(3032), itemIcon(3072), itemIcon(6672)],
         buildCount: 2,
       },
-      { id: 3065, items: [3065, 3742], names: ['振奋盔甲', '兰顿之兆'], buildCount: 2 },
+      {
+        id: 3065,
+        items: [3065, 3742],
+        names: ['振奋盔甲', '兰顿之兆'],
+        icons: [itemIcon(3065), itemIcon(3742)],
+        buildCount: 2,
+      },
       {
         id: 3089,
         items: [3089, 3157, 4645],
         names: ['灭世者的死亡之帽', '中娅沙漏', '星蚀驱驰'],
+        icons: [itemIcon(3089), itemIcon(3157), itemIcon(4645)],
         buildCount: 2,
       },
     ])
@@ -349,10 +409,24 @@ describe('海斗降级（manifest haidouDir = null）', () => {
 })
 
 describe('fail-fast 边界', () => {
-  it('gtimg hero_list.js 缺失 → 报错（alias/icon 是硬依赖）', () => {
+  it('gtimg 目录整体缺失 → 报错（图标索引先读，kiwi_augments.json 首个报错）', () => {
     expect(() => buildDataset({ ...CACHE_DIRS, gtimgDir: path.join(FIXTURES, 'no-such-dir') }, MANIFEST)).toThrow(
-      /hero_list/,
+      /kiwi_augments/,
     )
+  })
+
+  it('gtimg 图标索引/hero_list 逐个缺失 → 全部报错（gtimg 无降级路径）', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aramhex-gtimg-partial-'))
+    try {
+      fs.copyFileSync(path.join(FIXTURES, 'gtimg/hero_list.js'), path.join(dir, 'hero_list.js'))
+      expect(() => buildDataset({ ...CACHE_DIRS, gtimgDir: dir }, MANIFEST)).toThrow(/kiwi_augments/)
+      fs.copyFileSync(path.join(FIXTURES, 'gtimg/kiwi_augments.json'), path.join(dir, 'kiwi_augments.json'))
+      expect(() => buildDataset({ ...CACHE_DIRS, gtimgDir: dir }, MANIFEST)).toThrow(/items\.js/)
+      fs.copyFileSync(path.join(FIXTURES, 'gtimg/items.js'), path.join(dir, 'items.js'))
+      expect(() => buildDataset({ ...CACHE_DIRS, gtimgDir: dir }, MANIFEST)).not.toThrow()
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
   })
 
   it('haidouDir 非 null 但 index.json 缺失 → 报错（manifest 声称可用而缓存不一致）', () => {
@@ -416,6 +490,10 @@ describe('writeDataset', () => {
     expect(hero.ranking).toEqual({ winRate: 58.33, pickRate: 1.15, games: 2596616, wins: 1514671, rank: 1 })
     expect(hero.builds).toHaveLength(3)
     expect(hero.builds[0].core.names).toEqual(['育恩塔尔荒野箭', '海妖杀手', '血手'])
+    // Part B 图标契约：core.icons 平行数组 + starter 对象数组（icon 查 gtimg）
+    expect(hero.builds[0].core.icons).toHaveLength(3)
+    expect(hero.builds[0].starter).toEqual([{ name: '多兰之刃', icon: 'https://game.gtimg.cn/images/lol/act/img/item/1055.png' }])
+    expect(Object.keys(hero.augments.silver[0])).toEqual(['id', 'name', 'icon', 'games', 'wins', 'winRate'])
   })
 
   it('海斗缺失的英雄写出 builds:null；meta 原样落盘', () => {

@@ -1,18 +1,24 @@
 import { useState, type ReactNode } from 'react'
 
-import type { HeroBuild } from '@/lib/api'
+import { GameIcon } from '@/components/GameIcon'
+import type { HeroBuild, ItemChip } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { Panel } from './Panel'
 import { TabBar, tabPanelProps } from './Tabs'
 
-/** 装备名徽片（核心装 / 出门装 / 推荐装共用），flex-wrap 防窄栏溢出；
+/** 装备徽片（核心装 / 出门装 / 推荐装共用）：18px 游戏图标 + 名称，flex-wrap 防窄栏溢出；
  *  名单内允许重复装备名（真实数据如战士流出门装 双「增幅典籍」），key 需拼下标 */
-function ItemChips({ names }: { names: readonly string[] }) {
+function ItemChips({ items }: { items: ReadonlyArray<ItemChip> }) {
   return (
     <ul className="flex flex-wrap gap-1">
-      {names.map((name, i) => (
-        <li key={`${name}-${i}`} className="rounded border border-edge bg-ink px-1.5 py-0.5 text-[11px]">
-          {name}
+      {items.map((item, i) => (
+        <li
+          key={`${item.name}-${i}`}
+          className="flex items-center gap-1 rounded border border-edge bg-ink px-1.5 py-0.5 text-[11px]"
+        >
+          {/* gtimg 装备图标；查无此 id（icon null）时不渲染占位，只留名称兜底 */}
+          <GameIcon src={item.icon} size={18} rounded="rounded-sm" />
+          {item.name}
         </li>
       ))}
     </ul>
@@ -29,8 +35,8 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
-function EmptyField({ names }: { names: readonly string[] }) {
-  return names.length > 0 ? <ItemChips names={names} /> : <p className="text-xs text-muted">—</p>
+function EmptyField({ items }: { items: ReadonlyArray<ItemChip> }) {
+  return items.length > 0 ? <ItemChips items={items} /> : <p className="text-xs text-muted">—</p>
 }
 
 /**
@@ -92,13 +98,13 @@ export function BuildPanel({ builds, className = '' }: { builds: HeroBuild[] | n
               </div>
             </dl>
             <Field label="核心装">
-              <EmptyField names={build.core.names} />
+              <EmptyField items={build.core.names.map((name, i) => ({ name, icon: build.core.icons[i] ?? null }))} />
             </Field>
             <Field label="出门装">
-              <EmptyField names={build.starter} />
+              <EmptyField items={build.starter} />
             </Field>
             <Field label="推荐装">
-              <EmptyField names={build.recommended} />
+              <EmptyField items={build.recommended} />
             </Field>
             {build.summary && (
               <Field label="玩法">
