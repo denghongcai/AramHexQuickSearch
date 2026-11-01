@@ -14,7 +14,7 @@ import { formatCount } from '@/lib/format'
 import { RARITY_DOT, RARITY_LABEL } from '@/lib/rarity'
 import { TIER_BG } from '@/lib/tier'
 
-/** 面板骨架：圆角描边卡 + 小标题，内部列表空间不足时在面板内微滚（正常一屏放得下） */
+/** 面板骨架：圆角描边卡 + 小标题（正常一屏放得下；内容超高时由 main 的 lg 内滚兜底） */
 function Panel({
   title,
   aside,
@@ -118,15 +118,14 @@ export function OverviewPage() {
   const topHeroes = heroes.slice(0, 10)
   const topAugments = augmentsQ.data?.augments.slice(0, 10) ?? []
 
-  // 只渲染多件家族（items.length ≥ 2，Task 6 实测注记），按 buildCount 降序取前 8
+  // 只渲染多件家族（items.length ≥ 2，Task 6 实测注记）。multiFamilies 是过滤后全量
+  // （footnote 计数口径），展示取 buildCount 降序前 8——未来多件家族超过 8 个时，
+  // 被截掉的不会误计进单件数。
   const families = familiesQ.data?.families ?? []
-  const multiFamilies = useMemo(
-    () =>
-      families
-        .filter((f) => f.items.length >= 2)
-        .sort((a, b) => b.buildCount - a.buildCount)
-        .slice(0, 8),
-    [families],
+  const multiFamilies = useMemo(() => families.filter((f) => f.items.length >= 2), [families])
+  const multiTop = useMemo(
+    () => [...multiFamilies].sort((a, b) => b.buildCount - a.buildCount).slice(0, 8),
+    [multiFamilies],
   )
   const singleFamilyCount = families.length - multiFamilies.length
 
@@ -214,12 +213,12 @@ export function OverviewPage() {
           <PendingRows rows={5} />
         ) : familiesQ.isError ? (
           <p className="px-1.5 py-2 text-xs text-tier-d">家族数据加载失败，请刷新重试。</p>
-        ) : multiFamilies.length === 0 ? (
+        ) : multiTop.length === 0 ? (
           <p className="px-1.5 py-2 text-xs text-muted">本版本没有聚出多件家族。</p>
         ) : (
           <>
             <ul>
-              {multiFamilies.map((family: ItemFamily) => (
+              {multiTop.map((family: ItemFamily) => (
                 <li
                   key={family.id}
                   className="flex items-center gap-2 border-b border-edge/40 px-1.5 py-0.5 text-xs last:border-b-0"

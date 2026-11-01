@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { useAugments, useHeroes, useMeta } from '@/lib/api'
 import { formatCount } from '@/lib/format'
-import { RARITY_DOT } from '@/lib/rarity'
+import { RARITY_DOT, RARITY_LABEL } from '@/lib/rarity'
 import { TierBar } from '@/components/TierBar'
 
 /**
@@ -42,8 +42,8 @@ export function OverviewStrip({ className = '' }: { className?: string }) {
                 className="flex max-w-full items-center gap-1 rounded-full border border-edge bg-ink px-2 py-0.5 text-[11px] hover:border-accent"
               >
                 <span
-                  aria-hidden="true"
-                  title={augment.rarity}
+                  title={RARITY_LABEL[augment.rarity] ?? augment.rarity}
+                  aria-label={RARITY_LABEL[augment.rarity] ?? augment.rarity}
                   className={`size-1.5 shrink-0 rounded-full ${RARITY_DOT[augment.rarity] ?? 'bg-rar-silver'}`}
                 />
                 <span className="max-w-28 truncate">{augment.name}</span>

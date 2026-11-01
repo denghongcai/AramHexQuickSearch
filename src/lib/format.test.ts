@@ -22,6 +22,13 @@ describe('formatCount（万 / 亿缩写）', () => {
     expect(formatCount(10000)).toBe('1 万')
   })
 
+  it('万分支取整进位到亿位时落回亿分支（99999999 → 1 亿而非 10000 万）', () => {
+    expect(formatCount(99999999)).toBe('1 亿')
+    expect(formatCount(999499999)).toBe('10 亿')
+    // 阈值下沿：进位后仍 <1 亿的保持万分支
+    expect(formatCount(99499999)).toBe('9950 万')
+  })
+
   it('<1 万原样返回', () => {
     expect(formatCount(9999)).toBe('9999')
     expect(formatCount(317)).toBe('317')
