@@ -173,7 +173,7 @@ export function useHeroes() {
   })
 }
 
-/** 单英雄详情（与列表 hover 预取共用 queryKey，点进详情即命中缓存）；404 少重试，尽快给错误态 */
+/** 单英雄详情（与列表 hover 预取共用 queryKey，点进详情即命中缓存）；任何失败最多重试 1 次（默认 3 次），尽快进错误态 */
 export function useHero(id: string | number) {
   return useQuery({ ...heroQuery<HeroDetail>(id), retry: 1 })
 }

@@ -5,21 +5,46 @@ export interface TabDef<K extends string> {
   dot?: string
 }
 
+/** tab 元素 DOM id：`${idPrefix}-tab-${key}` */
+function tabId(idPrefix: string, key: string): string {
+  return `${idPrefix}-tab-${key}`
+}
+
+/** 面板元素 DOM id：`${idPrefix}-panel-${key}`（与 tabId 同一约定，供调用方给面板挂 id） */
+export function panelId(idPrefix: string, key: string): string {
+  return `${idPrefix}-panel-${key}`
+}
+
+/** 面板通用属性：id + role + aria-labelledby，与 TabBar 的 aria-controls 成对（展开写避免调用方漏接） */
+export function tabPanelProps(idPrefix: string, key: string) {
+  return {
+    id: panelId(idPrefix, key),
+    role: 'tabpanel' as const,
+    'aria-labelledby': tabId(idPrefix, key),
+  }
+}
+
 /**
- * 通用 tab 条（海克斯稀有度 / 出装流派共用）：
- * aria 语义齐全（tablist/tab/aria-selected），选中态用面板色块而非下划线，贴合深色主题。
+ * 通用 tab 条（海克斯稀有度 / 出装流派共用）：选中态用面板色块而非下划线，贴合深色主题。
+ * 覆盖的 aria 语义：role=tablist/tab、aria-selected、id + aria-controls 指向面板；
+ * 调用方须给面板挂 tabPanelProps(idPrefix, key)（id + role=tabpanel + aria-labelledby），
+ * 两侧约定由本模块派生、不会写岔。方向键漫游焦点（ARIA 完整模式）对这两个小 tab 条
+ * 属过度设计，刻意省略——原生 Tab 键可达即可。
  */
 export function TabBar<K extends string>({
   tabs,
   active,
   onChange,
   label,
+  idPrefix,
 }: {
   tabs: ReadonlyArray<TabDef<K>>
   active: K
   onChange: (key: K) => void
   /** tablist 的可访问名称 */
   label: string
+  /** tab/面板 DOM id 前缀（面板侧用 tabPanelProps 传同一前缀） */
+  idPrefix: string
 }) {
   return (
     <div role="tablist" aria-label={label} className="flex shrink-0 items-center gap-1">
@@ -30,7 +55,9 @@ export function TabBar<K extends string>({
             key={tab.key}
             type="button"
             role="tab"
+            id={tabId(idPrefix, tab.key)}
             aria-selected={selected}
+            aria-controls={panelId(idPrefix, tab.key)}
             onClick={() => onChange(tab.key)}
             className={[
               'flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors',

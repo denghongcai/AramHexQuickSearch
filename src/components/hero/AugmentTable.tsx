@@ -5,7 +5,7 @@ import { deltaClass, formatDelta, ppDelta } from '@/lib/delta'
 import { formatCount } from '@/lib/format'
 import { RARITY_DOT } from '@/lib/rarity'
 import { Panel } from './Panel'
-import { TabBar, type TabDef } from './Tabs'
+import { TabBar, tabPanelProps, type TabDef } from './Tabs'
 
 /** 稀有度 tab：契约键序 棱彩→金→银，色点复用共享 RARITY_DOT 映射 */
 const RARITY_TABS: ReadonlyArray<TabDef<keyof HeroDetail['augments']>> = [
@@ -60,7 +60,6 @@ function AugmentRowLine({ row, index, overall }: { row: HeroAugmentRow; index: n
  */
 export function AugmentTable({ hero, className = '' }: { hero: HeroDetail; className?: string }) {
   const [rarity, setRarity] = useState<keyof HeroDetail['augments']>('prismatic')
-  const rows = hero.augments[rarity]
 
   return (
     <Panel
@@ -69,34 +68,48 @@ export function AugmentTable({ hero, className = '' }: { hero: HeroDetail; class
       className={className}
     >
       <div className="flex h-full min-h-0 flex-col gap-1.5">
-        <TabBar label="海克斯稀有度" tabs={RARITY_TABS} active={rarity} onChange={setRarity} />
-        {rows.length === 0 ? (
-          <p className="px-1.5 py-3 text-xs text-muted">该稀有度下暂无数据。</p>
-        ) : (
-          <div className="max-h-[60dvh] min-h-0 flex-1 overflow-y-auto lg:max-h-none">
-            <table className="w-full table-fixed border-collapse text-xs">
-              <thead>
-                <tr className="text-left text-muted">
-                  <HeadCell className="w-8">#</HeadCell>
-                  <HeadCell>名称</HeadCell>
-                  <HeadCell className="w-12 text-right">胜率</HeadCell>
-                  <HeadCell
-                    className="w-14 text-right"
-                    title="该海克斯胜率 − 该英雄全体胜率（百分数直接相减）"
-                  >
-                    ±pp
-                  </HeadCell>
-                  <HeadCell className="w-14 text-right">场次</HeadCell>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, i) => (
-                  <AugmentRowLine key={row.id} row={row} index={i} overall={hero.ranking.winRate} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <TabBar idPrefix="hero-augments" label="海克斯稀有度" tabs={RARITY_TABS} active={rarity} onChange={setRarity} />
+        {/* 三个面板常驻 DOM（hidden 切换显隐）：每个 tab 的 aria-controls 都有落点，
+            id/labelledby 与 TabBar 同源（tabs.tsx）不会写岔 */}
+        {RARITY_TABS.map(({ key }) => {
+          const rows = hero.augments[key]
+          return (
+            <div
+              key={key}
+              {...tabPanelProps('hero-augments', key)}
+              hidden={key !== rarity}
+              className="flex min-h-0 flex-1 flex-col"
+            >
+              {rows.length === 0 ? (
+                <p className="px-1.5 py-3 text-xs text-muted">该稀有度下暂无数据。</p>
+              ) : (
+                <div className="max-h-[60dvh] min-h-0 flex-1 overflow-y-auto lg:max-h-none">
+                  <table className="w-full table-fixed border-collapse text-xs">
+                    <thead>
+                      <tr className="text-left text-muted">
+                        <HeadCell className="w-8">#</HeadCell>
+                        <HeadCell>名称</HeadCell>
+                        <HeadCell className="w-12 text-right">胜率</HeadCell>
+                        <HeadCell
+                          className="w-14 text-right"
+                          title="该海克斯胜率 − 该英雄全体胜率（百分数直接相减）"
+                        >
+                          ±pp
+                        </HeadCell>
+                        <HeadCell className="w-14 text-right">场次</HeadCell>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row, i) => (
+                        <AugmentRowLine key={row.id} row={row} index={i} overall={hero.ranking.winRate} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
     </Panel>
   )

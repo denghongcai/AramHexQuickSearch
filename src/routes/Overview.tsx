@@ -92,7 +92,7 @@ function TopAugmentRow({ augment }: { augment: AugmentRow }) {
       <span
         title={RARITY_LABEL[augment.rarity] ?? augment.rarity}
         aria-label={RARITY_LABEL[augment.rarity] ?? augment.rarity}
-        className={`size-2 shrink-0 rounded-full ${RARITY_DOT[augment.rarity] ?? 'bg-rar-silver'}`}
+        className={`size-2 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`}
       />
       <span className="min-w-0 flex-1 truncate">{augment.name}</span>
       <span className="w-11 shrink-0 text-right font-tnum tabular-nums">{augment.winRate}%</span>

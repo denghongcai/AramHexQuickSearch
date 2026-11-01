@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react'
 import type { HeroBuild } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { Panel } from './Panel'
-import { TabBar } from './Tabs'
+import { TabBar, tabPanelProps } from './Tabs'
 
 /** 装备名徽片（核心装 / 出门装 / 推荐装共用），flex-wrap 防窄栏溢出；
  *  名单内允许重复装备名（真实数据如战士流出门装 双「增幅典籍」），key 需拼下标 */
@@ -60,44 +60,53 @@ export function BuildPanel({ builds, className = '' }: { builds: HeroBuild[] | n
     >
       <div className="flex h-full min-h-0 flex-col gap-2">
         <TabBar
+          idPrefix="hero-builds"
           label="出装流派"
           tabs={list.map((build) => ({ key: build.key, label: build.name }))}
           active={active.key}
           onChange={setTab}
         />
-        {/* lg 下内容超高在面板内微滚；<lg 无高度约束，随文档流展开 */}
-        <div role="tabpanel" className="min-h-0 flex-1 space-y-2.5 overflow-y-auto">
-          <dl className="grid grid-cols-3 gap-2 rounded-lg bg-ink px-2 py-1.5 text-xs">
-            <div>
-              <dt className="text-muted">样本</dt>
-              <dd className="mt-0.5 font-tnum tabular-nums">{formatCount(active.sampleCount)}场</dd>
-            </div>
-            <div>
-              <dt className="text-muted">胜率</dt>
-              <dd className="mt-0.5 font-tnum font-semibold tabular-nums text-accent">
-                {active.winRate.toFixed(2)}%
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted">登场率</dt>
-              <dd className="mt-0.5 font-tnum tabular-nums">{active.pickRate.toFixed(2)}%</dd>
-            </div>
-          </dl>
-          <Field label="核心装">
-            <EmptyField names={active.core.names} />
-          </Field>
-          <Field label="出门装">
-            <EmptyField names={active.starter} />
-          </Field>
-          <Field label="推荐装">
-            <EmptyField names={active.recommended} />
-          </Field>
-          {active.summary && (
-            <Field label="玩法">
-              <p className="whitespace-pre-line text-[11px] leading-relaxed text-muted">{active.summary}</p>
+        {/* 面板常驻 DOM（hidden 切换显隐）：每个 tab 的 aria-controls 都有落点，
+            id/labelledby 与 TabBar 同源（tabs.tsx）；lg 下内容超高在面板内微滚，<lg 随文档流展开 */}
+        {list.map((build) => (
+          <div
+            key={build.key}
+            {...tabPanelProps('hero-builds', build.key)}
+            hidden={build.key !== active.key}
+            className="min-h-0 flex-1 space-y-2.5 overflow-y-auto"
+          >
+            <dl className="grid grid-cols-3 gap-2 rounded-lg bg-ink px-2 py-1.5 text-xs">
+              <div>
+                <dt className="text-muted">样本</dt>
+                <dd className="mt-0.5 font-tnum tabular-nums">{formatCount(build.sampleCount)}场</dd>
+              </div>
+              <div>
+                <dt className="text-muted">胜率</dt>
+                <dd className="mt-0.5 font-tnum font-semibold tabular-nums text-accent">
+                  {build.winRate.toFixed(2)}%
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted">登场率</dt>
+                <dd className="mt-0.5 font-tnum tabular-nums">{build.pickRate.toFixed(2)}%</dd>
+              </div>
+            </dl>
+            <Field label="核心装">
+              <EmptyField names={build.core.names} />
             </Field>
-          )}
-        </div>
+            <Field label="出门装">
+              <EmptyField names={build.starter} />
+            </Field>
+            <Field label="推荐装">
+              <EmptyField names={build.recommended} />
+            </Field>
+            {build.summary && (
+              <Field label="玩法">
+                <p className="whitespace-pre-line text-[11px] leading-relaxed text-muted">{build.summary}</p>
+              </Field>
+            )}
+          </div>
+        ))}
       </div>
     </Panel>
   )

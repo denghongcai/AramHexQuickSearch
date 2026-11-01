@@ -44,7 +44,7 @@ export function OverviewStrip({ className = '' }: { className?: string }) {
                 <span
                   title={RARITY_LABEL[augment.rarity] ?? augment.rarity}
                   aria-label={RARITY_LABEL[augment.rarity] ?? augment.rarity}
-                  className={`size-1.5 shrink-0 rounded-full ${RARITY_DOT[augment.rarity] ?? 'bg-rar-silver'}`}
+                  className={`size-1.5 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`}
                 />
                 <span className="max-w-28 truncate">{augment.name}</span>
                 <span className="shrink-0 font-tnum tabular-nums text-muted">{augment.winRate}%</span>

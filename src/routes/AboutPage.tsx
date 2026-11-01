@@ -52,7 +52,10 @@ function ExtLink({ href, children }: { href: string; children: ReactNode }) {
  */
 export function AboutPage() {
   const { data: meta } = useMeta()
+  // 链接统一策略：展示用常量兜底，meta.sources 能读到同名字段则优先（三源一致，不单源特殊化）
   const aramhex = sourceOf(meta, 'aramhex')
+  const haidou = sourceOf(meta, 'haidou')
+  const gtimg = sourceOf(meta, 'gtimg')
 
   return (
     <section className="mx-auto w-full max-w-3xl space-y-3 p-3 lg:p-6">
@@ -82,14 +85,14 @@ export function AboutPage() {
           <li className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span className="w-16 shrink-0 text-xs text-muted">出装 / 流派</span>
             <span className="min-w-0 flex-1 basis-48">
-              <ExtLink href={HAIDOU_URL}>海斗一图流公开数据（haidou.zhishitft.cn）</ExtLink>
+              <ExtLink href={haidou.url ?? HAIDOU_URL}>海斗一图流公开数据（haidou.zhishitft.cn）</ExtLink>
               <span className="mt-0.5 block text-[11px] text-muted">出装与流派家族的原始公开数据</span>
             </span>
           </li>
           <li className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span className="w-16 shrink-0 text-xs text-muted">静态资料</span>
             <span className="min-w-0 flex-1 basis-48">
-              <ExtLink href={GTIMG_URL}>腾讯 game.gtimg.cn</ExtLink>
+              <ExtLink href={gtimg.url ?? GTIMG_URL}>腾讯 game.gtimg.cn</ExtLink>
               <span className="mt-0.5 block text-[11px] text-muted">英雄名称 / 头像等静态资源</span>
             </span>
           </li>

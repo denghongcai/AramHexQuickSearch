@@ -3,17 +3,7 @@ import { useRouter, useSearch } from '@tanstack/react-router'
 import { countByRarity, filterAugments, parseRarity, RARITIES, type Rarity } from '@/lib/augments'
 import { useAugments, type AugmentRow } from '@/lib/api'
 import { formatCount } from '@/lib/format'
-import { RARITY_DOT, RARITY_LABEL } from '@/lib/rarity'
-
-/**
- * 稀有度 → 文字配色（页面本地字面量，保证 Tailwind 扫描得到；
- * 色点配色复用 rarity.ts 的 RARITY_DOT）。
- */
-const RARITY_TEXT: Record<string, string> = {
-  prismatic: 'text-rar-prismatic',
-  gold: 'text-rar-gold',
-  silver: 'text-rar-silver',
-}
+import { RARITY_DOT, RARITY_LABEL, RARITY_TEXT } from '@/lib/rarity'
 
 /** 桌面表头单元格：吸顶 + 描边，滚动时表头不跟随滚出视口 */
 const TH =
@@ -43,13 +33,13 @@ function AugmentTr({ augment }: { augment: AugmentRow }) {
           role="img"
           aria-label={label}
           title={label}
-          className={`mx-auto block size-2.5 rounded-full ${RARITY_DOT[augment.rarity] ?? 'bg-rar-silver'}`}
+          className={`mx-auto block size-2.5 rounded-full ${RARITY_DOT[augment.rarity]}`}
         />
       </td>
       <td className={`${TD} truncate`} title={augment.name}>
         {augment.name}
       </td>
-      <td className={`${TD} text-xs ${RARITY_TEXT[augment.rarity] ?? 'text-rar-silver'}`}>{label}</td>
+      <td className={`${TD} text-xs ${RARITY_TEXT[augment.rarity]}`}>{label}</td>
       <td className={`${TD} text-right font-tnum tabular-nums`}>{augment.winRate}%</td>
       <td className={`${TD} text-right font-tnum tabular-nums text-muted`}>{augment.pickRate}%</td>
       <td className={`${TD} whitespace-nowrap text-right font-tnum tabular-nums text-muted`}>
@@ -69,12 +59,12 @@ function AugmentCard({ augment }: { augment: AugmentRow }) {
       </span>
       <span
         aria-hidden="true"
-        className={`size-2.5 shrink-0 rounded-full ${RARITY_DOT[augment.rarity] ?? 'bg-rar-silver'}`}
+        className={`size-2.5 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`}
       />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{augment.name}</p>
         <p className="mt-0.5 flex items-center gap-2 text-[11px] text-muted">
-          <span className={RARITY_TEXT[augment.rarity] ?? 'text-rar-silver'}>
+          <span className={RARITY_TEXT[augment.rarity]}>
             {rarityLabel(augment.rarity)}
           </span>
           <span className="font-tnum tabular-nums">场次 {formatCount(augment.games)}</span>
@@ -146,11 +136,20 @@ export function AugmentsPage() {
       {/* lg 下容器内滚（吃满右栏高度），<lg 随页面滚动 */}
       <div className="min-h-0 min-w-0 flex-1 lg:overflow-y-auto">
         {isPending ? (
-          <ul className="space-y-2 lg:hidden">
-            {Array.from({ length: 12 }, (_, i) => (
-              <li key={i} className="h-12 animate-pulse rounded-lg bg-edge/40" />
-            ))}
-          </ul>
+          <>
+            {/* 移动端：卡片骨架（列表本体也是卡片） */}
+            <ul className="space-y-2 lg:hidden">
+              {Array.from({ length: 12 }, (_, i) => (
+                <li key={i} className="h-12 animate-pulse rounded-lg bg-edge/40" />
+              ))}
+            </ul>
+            {/* 桌面端：表格行骨架，pending 期间右栏不整块空白 */}
+            <div aria-hidden="true" className="hidden space-y-1.5 lg:block">
+              {Array.from({ length: 24 }, (_, i) => (
+                <div key={i} className="h-6 animate-pulse rounded bg-edge/30" />
+              ))}
+            </div>
+          </>
         ) : isError ? (
           <p className="py-6 text-sm text-tier-d">海克斯榜加载失败，请刷新重试。</p>
         ) : rows.length === 0 ? (

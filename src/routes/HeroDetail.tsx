@@ -64,7 +64,7 @@ function ErrorPage({ id, missing }: { id: string; missing: boolean }) {
  * <lg —— 单列文档流：头部 → 海克斯表 → 右栏三面板依次堆叠，BottomNav 不变。
  */
 export function HeroDetailPage() {
-  const { id } = useParams({ strict: false }) as { id: string }
+  const { id } = useParams({ from: '/hero/$id' })
   const heroQ = useHero(id)
   // 详情 JSON 不含 tier：S 色片用英雄榜（rail 已缓存，无额外请求）里的档位补上
   const tier = useHeroes().data?.heroes.find((hero) => String(hero.id) === id)?.tier
