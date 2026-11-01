@@ -1,8 +1,9 @@
 {
   "name": "aramhex-quick-search",
   "compatibility_date": "2026-10-01",
-  // 自定义域：需 Cloudflare 账号内存在 dhc.house zone（custom_domain 会自动建 DNS 记录与证书）
-  "routes": [{ "pattern": "aramhex.dhc.house", "custom_domain": true }],
+  // 自定义域 aramhex.dhc.house 已绑定在 Worker 上（一次性操作，本地完成）。
+  // 这里刻意不声明 routes：CI 只更新脚本与资产，不做触发器 reconcile，
+  // 令牌无需任何区域级权限。⚠️ 勿把 routes 加回来跑 CI，否则需要区域级权限。
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"
