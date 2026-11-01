@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useRouter, useRouterState, useSearch } from '@tanstack/react-router'
 import { heroQuery, useHeroes, type HeroRow } from '@/lib/api'
@@ -62,12 +62,37 @@ const HeroItem = memo(function HeroItem({ hero }: { hero: HeroRow }) {
  * lg 下占 360px 左栏、列表内部滚动；<lg 下全宽、随页面滚动（无内滚）。
  * 查询词落在 ?q=（根路由 validateSearch），replace 写入不产生历史记录，
  * 刷新/分享/后退都能还原过滤态。
+ *
+ * IME 组合守卫（修复中文输入法拼音散架）：输入受控值是本地镜像 localQ，
+ * URL ?q= 只在组合结束（compositionend）后才同步——组合期间的 onChange 只更新
+ * 镜像、不 navigate（每次 navigate 重渲染都会重置 input value，把组合中的拼音
+ * 打散成纯英文）。Chrome 系 input 先于 compositionend、Safari 反序，两条路径
+ * 都会收敛到一次 URL 同步（onCompositionEnd 用当前输入框全值兜底），行为一致。
  */
 export function HeroRail({ className = '' }: { className?: string }) {
   const { data, isPending, isError } = useHeroes()
   // router.navigate 不带 from：search-only 更新停在当前路径（详情页里打字不丢 /hero/$id）
   const router = useRouter()
   const { q } = useSearch({ strict: false }) as { q?: string }
+
+  // 组合中的标记用 ref（不触发渲染）；镜像 state 驱动输入框，组合期间 URL 不动
+  const composingRef = useRef(false)
+  const [localQ, setLocalQ] = useState(q ?? '')
+
+  const syncToUrl = (value: string) =>
+    void router.navigate({
+      // '.' = 停在当前路径；函数式更新保留其他 search 参数；空串摘掉 q，URL 回到干净状态
+      to: '.',
+      search: (prev) => ({ ...prev, q: value || undefined }),
+      replace: true,
+    })
+
+  // 外部回灌：浏览器前进/后退、原生 × 清空等外部变化改写了 URL 的 q 时镜像回
+  // 本地；比较后才 set（q 与镜像本就一致时不动作），且组合期间绝不回灌（防抖动
+  // 与打字覆盖）
+  useEffect(() => {
+    if (!composingRef.current && (q ?? '') !== localQ) setLocalQ(q ?? '')
+  }, [q, localQ])
 
   const heroes = data?.heroes ?? []
   const visible = filterHeroes(heroes, q ?? '')
@@ -77,15 +102,22 @@ export function HeroRail({ className = '' }: { className?: string }) {
       <div className="p-3">
         <input
           type="search"
-          value={q ?? ''}
-          onChange={(e) =>
-            void router.navigate({
-              // '.' = 停在当前路径；函数式更新保留其他 search 参数；空串摘掉 q，URL 回到干净状态
-              to: '.',
-              search: (prev) => ({ ...prev, q: e.target.value || undefined }),
-              replace: true,
-            })
-          }
+          value={localQ}
+          onChange={(e) => {
+            const value = e.target.value
+            setLocalQ(value)
+            // 组合期间的中间拼音（如 "huo'nang"）不进 URL；组合结束后由
+            // onCompositionEnd 统一同步（Safari 反序时 composing 已复位，这里照常同步）
+            if (!composingRef.current) syncToUrl(value)
+          }}
+          onCompositionStart={() => {
+            composingRef.current = true
+          }}
+          onCompositionEnd={(e) => {
+            composingRef.current = false
+            // 用当前输入框全值（而非 e.data）同步：覆盖多次组合拼接的完整查询
+            syncToUrl(e.currentTarget.value)
+          }}
           aria-label="搜索英雄 / 拼音 / 别名"
           placeholder="搜索英雄 / 拼音 / 别名"
           className="w-full rounded-lg border border-edge bg-ink px-3 py-2 text-sm outline-none placeholder:text-muted focus:border-accent lg:text-[15px]"
