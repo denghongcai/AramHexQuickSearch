@@ -1,0 +1,53 @@
+# 每日数据更新 + 自动部署 Cloudflare Worker。
+#
+# 凭据安全（重要）：
+# - 令牌只存在于仓库 Settings → Secrets and variables → Actions（加密存储），
+#   本文件只引用密钥名，不含任何值。
+# - 公开仓库的 fork PR 拿不到 secrets，因此他人无法借 PR 触发带凭据的部署；
+#   workflow_dispatch 手动触发需要仓库 write 权限（即只有仓库所有者）。
+# - 需要配置两个 Secret（一次性，见 README「CI 自动部署」）：
+#     CLOUDFLARE_API_TOKEN   自定义令牌，权限：Account / Workers Scripts / Edit
+#     CLOUDFLARE_ACCOUNT_ID  账户 ID（Cloudflare 控制台右侧栏可见）
+
+name: deploy
+
+on:
+  schedule:
+    # UTC 08:00 = 北京时间 16:00，避开上游 aramhex-data 的晨间更新窗口
+    - cron: '0 8 * * *'
+  workflow_dispatch: {}
+
+# 最小权限：不需要 GITHUB_TOKEN 写任何东西
+permissions:
+  contents: read
+
+# 防止手动触发与定时跑重叠部署
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 拉取数据源并离线分析
+        run: pnpm full
+
+      - name: 部署到 Cloudflare Workers
+        run: pnpm exec wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
