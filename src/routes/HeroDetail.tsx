@@ -9,7 +9,7 @@ import { useHero, useHeroes } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { TIER_BG } from '@/lib/tier'
 
-/** 桌面两栏（左宽海克斯表 / 右窄 320px 三面板）的骨架，加载与正常态共用 */
+/** 桌面两栏（左宽：出装流派 + 海克斯表 / 右窄 320px：召唤师技能 + 分段）的骨架，加载与正常态共用 */
 function DetailSkeletonGrid({ children }: { children: ReactNode }) {
   return (
     <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_320px] lg:grid-rows-[minmax(0,1fr)]">
@@ -59,9 +59,10 @@ function ErrorPage({ id, missing }: { id: string; missing: boolean }) {
 }
 
 /**
- * /hero/$id 英雄详情（Task 11）：
- * lg —— 头部一行 + 左宽右窄两栏，海克斯表在面板内微滚，整页一屏；
- * <lg —— 单列文档流：头部 → 海克斯表 → 右栏三面板依次堆叠，BottomNav 不变。
+ * /hero/$id 英雄详情（Task 11，布局按用户反馈重排）：
+ * lg —— 头部一行 + 左宽右窄两栏：左栏出装流派在上、海克斯表填满剩余高度（面板内微滚），
+ *       右栏召唤师技能 + 分段胜率；整页一屏。
+ * <lg —— 单列文档流：头部 → 出装流派 → 海克斯表 → 召唤师技能 → 分段，BottomNav 不变。
  */
 export function HeroDetailPage() {
   const { id } = useParams({ from: '/hero/$id' })
@@ -127,13 +128,16 @@ export function HeroDetailPage() {
       </header>
 
       <DetailSkeletonGrid>
-        {/* 左宽栏：海克斯三档 tabs + 表格内部微滚（key：切英雄时重置 tab） */}
-        <AugmentTable key={hero.id} hero={hero} />
-        {/* 右窄栏：召唤师技能 Top5 → 分段胜率 → 出装流派，依次堆叠 */}
+        {/* 左宽栏：出装流派（自然高）在上 → 海克斯表 flex-1 填满剩余、面板内微滚
+            （key：切英雄时重置 tab；lg:overflow-hidden 供内滚容器成立） */}
+        <div className="flex min-h-0 flex-col gap-3 lg:overflow-hidden">
+          <BuildPanel key={hero.id} builds={hero.builds} className="shrink-0" />
+          <AugmentTable key={hero.id} hero={hero} className="min-h-0 flex-1" />
+        </div>
+        {/* 右窄栏：召唤师技能 Top5 → 分段胜率（短面板，自然高堆叠） */}
         <div className="flex min-h-0 flex-col gap-3">
           <SpellList spells={hero.spells} />
           <BandBars bands={hero.bands} />
-          <BuildPanel key={hero.id} builds={hero.builds} />
         </div>
       </DetailSkeletonGrid>
     </section>
