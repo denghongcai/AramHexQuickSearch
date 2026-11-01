@@ -1,9 +1,9 @@
 {
   "name": "aramhex-quick-search",
   "compatibility_date": "2026-10-01",
-  // 触发器（自定义域 aramhex.dhc.house ✓ 绑定 / workers.dev ✗ 禁用）均为一次性带外操作，
-  // 刻意不在配置中声明：CI 只更新脚本与资产，窄权限令牌无需任何触发器权限。
-  // ⚠️ 勿在此声明 routes 或 workers_dev 跑 CI——触发器变更需要区域级权限，会导致部署失败。
+  // 自定义域声明式管理：CI 令牌需含 Worker 脚本编辑（帐户级）+
+  // dhc.house 的 区域读取 / DNS 写入 / SSL 和证书编辑 三项区域权限
+  "routes": [{ "pattern": "aramhex.dhc.house", "custom_domain": true }],
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"
