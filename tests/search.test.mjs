@@ -101,6 +101,67 @@ describe('buildSearchKeys 多音字与 ü（按库真实行为钉值）', () => 
   })
 })
 
+describe('buildSearchKeys 社区别名（海斗 guides[].aliases）', () => {
+  // 布兰德(63) 真实别名口径（海斗 index 实测）：中文名 / 拼全称 / 拉丁混排
+  const brandAliases = ['布兰德', '复仇焰魂', 'Brand', '火男', 'huo', 'huonan', 'bu', 'bulande', 'fuchouyanhun', '烤肉', 'kaorou']
+  const keys = buildSearchKeys({ name: '布兰德', title: '复仇焰魂', alias: 'Brand', aliases: brandAliases })
+
+  it('字段名仍固定 n/t/p/f（前端 matcher 零改动）', () => {
+    expect(Object.keys(keys)).toEqual(['n', 't', 'p', 'f'])
+  })
+
+  it('CJK 别名进 n：词本身 + 全拼（火男→huonan、烤肉→kaorou、布兰德→bulande 修复全拼缺口）', () => {
+    for (const term of ['火男', 'huonan', '烤肉', 'kaorou', '布兰德', 'bulande', '复仇焰魂', 'fuchouyanhun']) {
+      expect(keys.n).toContain(term)
+    }
+  })
+
+  it('CJK 别名首字母进 f（火男→hn、烤肉→kr）', () => {
+    expect(keys.f).toContain('hn')
+    expect(keys.f).toContain('kr')
+    expect(keys.f).toContain('bld')
+  })
+
+  it('拉丁别名进 n（前端只匹配 n/t/f，不进 n 就搜不到）与 p', () => {
+    for (const term of ['brand', 'huo', 'huonan', 'bu', 'bulande', 'fuchouyanhun', 'kaorou']) {
+      expect(keys.n).toContain(term)
+      expect(keys.p).toContain(term)
+    }
+  })
+
+  it('CJK 别名不进 p（p 仍只收纯拉丁词项）', () => {
+    expect(keys.p).not.toContain('火男')
+    expect(keys.p).not.toContain('烤肉')
+  })
+
+  it('别名拉丁大写归一（HuoNan → huonan）', () => {
+    const upper = buildSearchKeys({ name: '布兰德', title: '复仇焰魂', aliases: ['HuoNan'] })
+    expect(upper.n).toContain('huonan')
+    expect(upper.p).toContain('huonan')
+  })
+
+  it('亚索外号：风男/压缩进 n，fn 进 f；压缩全拼 yasuo 与拉丁名去重', () => {
+    const yasuo = buildSearchKeys({ name: '亚索', title: '疾风剑豪', alias: 'Yasuo', aliases: ['风男', '压缩', 'fengnan'] })
+    expect(yasuo.n).toEqual(['亚索', 'yasuo', '疾风剑豪', 'jifengjianhao', '风男', 'fengnan', '压缩'])
+    expect(yasuo.f).toEqual(['ys', 'jfjh', 'fn'])
+    // p 只收纯拉丁词项：疾风剑豪全拼来自称号（进 n/t），不是拉丁词项
+    expect(yasuo.p).toEqual(['yasuo', 'fengnan'])
+  })
+
+  it('向后兼容钉：无 aliases（缺省 / undefined / 空数组）输出与旧版完全一致', () => {
+    const legacy = { n: ['亚索', 'yasuo'], t: ['疾风剑豪', 'jifengjianhao'], p: ['yasuo'], f: ['ys', 'jfjh'] }
+    expect(buildSearchKeys({ name: '亚索', title: '疾风剑豪', alias: 'Yasuo' })).toEqual(legacy)
+    expect(buildSearchKeys({ name: '亚索', title: '疾风剑豪', alias: 'Yasuo', aliases: undefined })).toEqual(legacy)
+    expect(buildSearchKeys({ name: '亚索', title: '疾风剑豪', alias: 'Yasuo', aliases: [] })).toEqual(legacy)
+  })
+
+  it('fail-fast：aliases 非数组或词项非字符串时报错', () => {
+    expect(() => buildSearchKeys({ name: '亚索', title: '疾风剑豪', aliases: '风男' })).toThrow(/aliases/)
+    expect(() => buildSearchKeys({ name: '亚索', title: '疾风剑豪', aliases: [42] })).toThrow(/aliases/)
+    expect(() => buildSearchKeys({ name: '亚索', title: '疾风剑豪', aliases: [null] })).toThrow(/aliases/)
+  })
+})
+
 describe('buildSearchKeys fail-fast', () => {
   it('name 缺失/规范化为空时报错（报出字段与原值）', () => {
     expect(() => buildSearchKeys({ title: '疾风剑豪' })).toThrow(/name/)

@@ -97,7 +97,21 @@ describe('buildDataset → heroes（列表行）', () => {
       games: 2596616,
       buildCount: 3,
     })
-    expect(row.search).toEqual(buildSearchKeys({ name: '亚索', title: '疾风剑豪', alias: 'Yasuo' }))
+    // haidou index.json 的 guides[].aliases 按 id join 进检索键（fixture 157 带 4 个词项）
+    expect(row.search).toEqual(
+      buildSearchKeys({ name: '亚索', title: '疾风剑豪', alias: 'Yasuo', aliases: ['风男', '压缩', 'Yasuo', 'fengnan'] }),
+    )
+    // join 断言：外号本身进 n、外号首字母进 f（前端 matcher 只查 n/t/f）
+    expect(row.search.n).toEqual(
+      expect.arrayContaining(['风男', '压缩', 'fengnan', 'yasuo', 'jifengjianhao']),
+    )
+    expect(row.search.f).toContain('fn')
+  })
+
+  it('guides 条目缺 aliases 的英雄优雅回落：hero 22 检索键与旧版一致（外号缺失不致命）', () => {
+    const row = dataset.heroes.find((h) => h.id === 22)
+    expect(row.search.n).toEqual(['李青'])
+    expect(row.search.f).toEqual(['lq', 'ms']) // 李青 + 盲僧（称号）首字母，旧口径原样
   })
 
   it('gtimg 缺 alias 的英雄降级：alias/icon 为 null，检索键 p 为空数组', () => {
@@ -316,6 +330,11 @@ describe('海斗降级（manifest haidouDir = null）', () => {
     expect(degraded.heroes.map((h) => h.builds)).toEqual([null, null, null])
     expect(degraded.heroes.map((h) => h.buildCount)).toEqual([0, 0, 0])
     expect(degraded.heroes.map((h) => h.id)).toEqual([157, 22, 1])
+  })
+
+  it('检索键回落旧口径（无社区别名）：157 的 n 不含风男/压缩', () => {
+    expect(degraded.heroes[0].search).toEqual(buildSearchKeys({ name: '亚索', title: '疾风剑豪', alias: 'Yasuo' }))
+    expect(degraded.heroes[0].search.n).not.toContain('风男')
   })
 
   it('families 为空、meta.sources.haidou.used=false，其余数据不受影响', () => {

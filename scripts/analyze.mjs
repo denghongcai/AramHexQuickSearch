@@ -10,7 +10,8 @@
  * 降级契约（与 fetch-sources 对齐）：
  * - 海斗可用性只看 manifest.haidouDir 是否为 null（整体宕机后磁盘上可能仍残留
  *   旧的 .cache/haidou/ 目录，目录存在性不是信号）；
- * - haidouDir 为 null → 全部英雄 builds:null、buildCount 0、families 空，流程不中断；
+ * - haidouDir 为 null → 全部英雄 builds:null、buildCount 0、families 空，
+ *   检索键不带社区别名（回落 name/title/alias 旧口径），流程不中断；
  * - index.json 声称可用而 heroes/{slug}.json 单文件缺失 → 该英雄 builds:null +
  *   warn（fetch 侧本就按文件粒度容错记 FAILED.json）；index.json 本身缺失/结构
  *   漂移 → 报错（manifest 声称可用而缓存不一致，必须大声失败）；
@@ -86,7 +87,10 @@ export function parseGtimgHeroList(json) {
  * 解析海斗 data 层（index.json + items/index.json + heroes/{slug}.json）。
  * slug→heroId 映射以 index.json 的 guides[].id 为准（实测即英雄数字 id）。
  * @param {string} haidouDataDir 含 index.json 的目录（manifest.haidouDir 下的 data/）
- * @returns {{buildsByHero: Map<number, Array>, itemMeta: Object<number, string>}}
+ * @returns {{buildsByHero: Map<number, Array>, itemMeta: Object<number, string>,
+ *   aliasesByHero: Map<number, string[]>}} aliasesByHero = heroId → 社区别名词项
+ *   （guides[].aliases，搜索外号用）；条目缺 aliases 或词项结构漂移时该英雄
+ *   不进表（搜索侧优雅回落旧口径，warn 提示，不中断构建）
  */
 function parseHaidou(haidouDataDir) {
   const guides = readJsonFile(path.join(haidouDataDir, 'index.json'))?.guides
@@ -96,8 +100,10 @@ function parseHaidou(haidouDataDir) {
   const itemMeta = buildItemMeta(readJsonFile(path.join(haidouDataDir, 'items', 'index.json')))
 
   const buildsByHero = new Map()
+  const aliasesByHero = new Map()
   const seenSlugs = new Set()
   let missing = 0
+  let aliasDrift = 0
   for (const guide of guides) {
     const heroId = Number(guide?.id)
     const slug = guide?.slug
@@ -108,6 +114,15 @@ function parseHaidou(haidouDataDir) {
       throw new Error(`haidou index.json guides 重复: slug=${slug} heroId=${heroId}`)
     }
     seenSlugs.add(slug)
+    // 社区别名是可选增强字段：缺失（老版本 index）静默跳过；结构漂移（非字符串
+    // 数组）warn 后跳过——外号搜不到可以接受，构建失败不可以
+    if (guide.aliases != null) {
+      if (Array.isArray(guide.aliases) && guide.aliases.every((a) => typeof a === 'string')) {
+        aliasesByHero.set(heroId, guide.aliases)
+      } else {
+        aliasDrift++
+      }
+    }
 
     let heroJson
     try {
@@ -131,7 +146,10 @@ function parseHaidou(haidouDataDir) {
   if (missing > 0) {
     console.warn(`[analyze] haidou ${missing}/${guides.length} 个英雄文件缺失（fetch 侧 FAILED.json 应有记录）`)
   }
-  return { buildsByHero, itemMeta }
+  if (aliasDrift > 0) {
+    console.warn(`[analyze] haidou ${aliasDrift}/${guides.length} 条 guides 的 aliases 结构漂移（非字符串数组），已忽略`)
+  }
+  return { buildsByHero, itemMeta, aliasesByHero }
 }
 
 /**
@@ -225,8 +243,9 @@ export function buildDataset(cacheDirs, manifest = {}) {
   // 4. 海斗（可选源）：可用性以 manifest 的 haidouDir 为准，绝不看磁盘目录
   let buildsByHero = null
   let itemMeta = null
+  let aliasesByHero = null
   if (cacheDirs.haidouDir != null) {
-    ;({ buildsByHero, itemMeta } = parseHaidou(cacheDirs.haidouDir))
+    ;({ buildsByHero, itemMeta, aliasesByHero } = parseHaidou(cacheDirs.haidouDir))
   }
 
   // 5. gtimg hero_list.js → alias/icon 索引（拉丁名唯一来源）
@@ -258,7 +277,14 @@ export function buildDataset(cacheDirs, manifest = {}) {
         pickRate: toPercent2dp(h.pickRate),
         games: h.games,
         wins: h.wins,
-        search: buildSearchKeys({ name: h.name, title: h.title, alias: alias ?? undefined }),
+        // 别名按 guides[].id join 英雄；海斗降级或该英雄条目缺 aliases 时传
+        // undefined → buildSearchKeys 走旧口径（优雅降级，见 search.mjs JSDoc）
+        search: buildSearchKeys({
+          name: h.name,
+          title: h.title,
+          alias: alias ?? undefined,
+          aliases: aliasesByHero?.get(h.id),
+        }),
         buildCount: builds ? builds.length : 0,
         bands: buildBands(h, aramhex.bands),
         spells: buildSpells(aramhex.spells[h.id]),
