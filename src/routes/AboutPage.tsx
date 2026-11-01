@@ -59,7 +59,7 @@ export function AboutPage() {
 
   return (
     <section className="mx-auto w-full max-w-3xl space-y-3 p-3 lg:p-6">
-      <h2 className="text-lg font-semibold">关于</h2>
+      <h2 className="text-lg font-semibold lg:text-xl lg:font-bold">关于</h2>
 
       {/* 1. 数据来源与署名（显著位置） */}
       <Section title="数据来源与署名">

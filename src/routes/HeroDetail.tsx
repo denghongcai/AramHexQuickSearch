@@ -90,7 +90,7 @@ export function HeroDetailPage() {
         />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="truncate text-lg font-semibold leading-6">{hero.name}</h1>
+            <h1 className="truncate text-lg font-semibold leading-6 lg:text-2xl lg:leading-8">{hero.name}</h1>
             {tier && (
               <span
                 title={`Tier ${tier}`}
@@ -102,12 +102,12 @@ export function HeroDetailPage() {
               </span>
             )}
           </div>
-          <p className="truncate text-xs text-muted">{hero.title}</p>
+          <p className="truncate text-xs text-muted lg:text-[15px]">{hero.title}</p>
         </div>
-        <dl className="ml-auto flex shrink-0 items-end gap-3 text-xs sm:gap-4">
+        <dl className="ml-auto flex shrink-0 items-end gap-3 text-xs sm:gap-4 lg:text-sm">
           <div className="text-right">
             <dt className="text-muted">胜率</dt>
-            <dd className="mt-0.5 font-tnum text-base font-semibold leading-5 tabular-nums text-accent">
+            <dd className="mt-0.5 font-tnum text-base font-semibold leading-5 tabular-nums text-accent lg:text-lg">
               {hero.ranking.winRate.toFixed(2)}%
             </dd>
           </div>

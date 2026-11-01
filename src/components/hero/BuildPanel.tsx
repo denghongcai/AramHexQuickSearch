@@ -81,7 +81,7 @@ export function BuildPanel({ builds, className = '' }: { builds: HeroBuild[] | n
             hidden={build.key !== active.key}
             className="min-h-0 flex-1 space-y-2.5 overflow-y-auto"
           >
-            <dl className="grid grid-cols-3 gap-2 rounded-lg bg-ink px-2 py-1.5 text-xs">
+            <dl className="grid grid-cols-3 gap-2 rounded-lg bg-ink px-2 py-1.5 text-xs lg:text-[15px]">
               <div>
                 <dt className="text-muted">样本</dt>
                 <dd className="mt-0.5 font-tnum tabular-nums">{formatCount(build.sampleCount)}场</dd>
@@ -108,7 +108,7 @@ export function BuildPanel({ builds, className = '' }: { builds: HeroBuild[] | n
             </Field>
             {build.summary && (
               <Field label="玩法">
-                <p className="whitespace-pre-line text-[11px] leading-relaxed text-muted">{build.summary}</p>
+                <p className="whitespace-pre-line text-[11px] leading-relaxed text-muted lg:text-sm">{build.summary}</p>
               </Field>
             )}
           </div>

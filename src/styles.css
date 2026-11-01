@@ -29,20 +29,29 @@ html {
 body {
   background-color: var(--color-ink);
   color: var(--color-txt);
+  /* 中文优先的现代字体栈：本机装了 MiSans / HarmonyOS Sans 即生效（更饱满），
+     没有则按序优雅回落到系统字体；刻意不引入网络字体（国内网络 googlefonts 不可达）。
+     基准字号：移动端维持 14px 紧凑，lg（≥1024px）起 15px（用户反馈 PC 字太小） */
   font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
+    "MiSans",
+    "HarmonyOS Sans SC",
     "PingFang SC",
-    "Microsoft YaHei",
+    "Segoe UI",
+    "Microsoft YaHei UI",
+    system-ui,
     sans-serif;
+  font-size: 14px;
 }
 
-/* lg（≥1024px）起整页不滚动，滚动只发生在各栏内部 */
+/* lg（≥1024px）起整页不滚动，滚动只发生在各栏内部；同时放大全局基准字号 */
 @media (min-width: 64rem) {
   html,
   body {
     overflow: hidden;
+  }
+
+  body {
+    font-size: 15px;
   }
 }
 

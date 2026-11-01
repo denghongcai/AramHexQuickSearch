@@ -8,9 +8,9 @@ import { RARITY_DOT, RARITY_LABEL, RARITY_TEXT } from '@/lib/rarity'
 
 /** 桌面表头单元格：吸顶 + 描边，滚动时表头不跟随滚出视口 */
 const TH =
-  'sticky top-0 z-10 border-b border-edge bg-panel px-2 py-2 text-left text-xs font-normal text-muted'
+  'sticky top-0 z-10 border-b border-edge bg-panel px-2 py-2 text-left text-xs font-normal text-muted lg:text-sm'
 /** 桌面数据单元格 */
-const TD = 'border-b border-edge/40 px-2 py-1.5'
+const TD = 'border-b border-edge/40 px-2 py-2'
 
 /** 稀有度 → 中文标签（rarity.ts 无此值时的兜底，正常数据三种都有） */
 function rarityLabel(rarity: string): string {
@@ -23,9 +23,8 @@ const TABS: ReadonlyArray<{ value: Rarity | undefined; label: string }> = [
   ...RARITIES.map((value) => ({ value, label: rarityLabel(value) })),
 ]
 
-/** 桌面表格行（<lg 下由卡片列表接替） */
+/** 桌面表格行（<lg 下由卡片列表接替）；稀有度不设列（tab 筛选已表达，图标兜底色点可见） */
 function AugmentTr({ augment }: { augment: AugmentRow }) {
-  const label = rarityLabel(augment.rarity)
   return (
     <tr className="hover:bg-edge/20">
       <td className={`${TD} text-right font-tnum text-xs tabular-nums text-muted`}>{augment.rank}</td>
@@ -43,8 +42,7 @@ function AugmentTr({ augment }: { augment: AugmentRow }) {
           </span>
         </div>
       </td>
-      <td className={`${TD} text-xs ${RARITY_TEXT[augment.rarity]}`}>{label}</td>
-      <td className={`${TD} text-right font-tnum tabular-nums`}>{augment.winRate}%</td>
+      <td className={`${TD} text-right font-tnum font-semibold tabular-nums`}>{augment.winRate}%</td>
       <td className={`${TD} text-right font-tnum tabular-nums text-muted`}>{augment.pickRate}%</td>
       <td className={`${TD} whitespace-nowrap text-right font-tnum tabular-nums text-muted`}>
         {formatCount(augment.games)}
@@ -110,7 +108,7 @@ export function AugmentsPage() {
   return (
     <section className="flex min-h-0 min-w-0 flex-col gap-2 p-3 lg:h-full">
       <header className="flex shrink-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-        <h2 className="text-base font-semibold">海克斯排行</h2>
+        <h2 className="text-base font-semibold lg:text-xl lg:font-bold">海克斯排行</h2>
         {/* 口径注记：pickRate 是「同稀有度内场次占比」，不是全局占比 */}
         <p className="text-[11px] text-muted">登场率：稀有度内占比 · 按胜率降序</p>
       </header>
@@ -166,12 +164,11 @@ export function AugmentsPage() {
         ) : (
           <>
             {/* 桌面表格：内部滚动，217 行不撑破右栏 */}
-            <table className="hidden w-full table-fixed border-separate border-spacing-0 text-sm lg:table">
+            <table className="hidden w-full table-fixed border-separate border-spacing-0 text-sm lg:table lg:text-[15px]">
               <thead>
                 <tr>
                   <th className={`${TH} w-10 text-right`}>#</th>
                   <th className={TH}>名称</th>
-                  <th className={`${TH} w-16`}>稀有度</th>
                   <th className={`${TH} w-[4.5rem] text-right`}>胜率</th>
                   {/* 口径见列头 title 与页头注记 */}
                   <th

@@ -13,7 +13,7 @@ const BAND_ROWS = [
 /** 单行：标签 + 横条（宽 = 胜率%）+ 胜率 + 场次 */
 function BandRow({ label, band }: { label: string; band: HeroBand }) {
   return (
-    <li className="flex items-center gap-2 text-xs">
+    <li className="flex items-center gap-2 text-xs lg:text-[15px]">
       <span className="w-8 shrink-0 text-muted">{label}</span>
       <span aria-hidden="true" className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-edge/40">
         <span
@@ -21,7 +21,7 @@ function BandRow({ label, band }: { label: string; band: HeroBand }) {
           style={{ width: `${band.winRate}%` }}
         />
       </span>
-      <span className="w-12 shrink-0 text-right font-tnum tabular-nums">{band.winRate.toFixed(2)}%</span>
+      <span className="w-12 shrink-0 text-right font-tnum font-semibold tabular-nums">{band.winRate.toFixed(2)}%</span>
       <span className="w-14 shrink-0 text-right font-tnum tabular-nums whitespace-nowrap text-muted">
         {formatCount(band.games)}
       </span>

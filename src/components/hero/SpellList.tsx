@@ -16,12 +16,12 @@ export function SpellList({ spells, className = '' }: { spells: HeroDetail['spel
       ) : (
         <ul className="space-y-0.5">
           {top.map((spell) => (
-            <li key={spell.combo} className="flex items-center gap-2 px-1.5 py-0.5 text-xs">
+            <li key={spell.combo} className="flex items-center gap-2 px-1.5 py-0.5 text-xs lg:text-[15px]">
               <span className="min-w-0 flex-1 truncate">{spell.names.join(' + ')}</span>
               <span className="w-14 shrink-0 text-right font-tnum tabular-nums whitespace-nowrap text-muted">
                 {formatCount(spell.games)}
               </span>
-              <span className="w-12 shrink-0 text-right font-tnum tabular-nums">
+              <span className="w-12 shrink-0 text-right font-tnum font-semibold tabular-nums">
                 {spell.winRate.toFixed(2)}%
               </span>
             </li>

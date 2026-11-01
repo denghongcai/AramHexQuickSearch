@@ -22,7 +22,7 @@ const HeroItem = memo(function HeroItem({ hero }: { hero: HeroRow }) {
         params={{ id: String(hero.id) }}
         onMouseEnter={prefetch}
         onFocus={prefetch}
-        className={`flex items-center gap-2 border-l-2 py-2 pl-3 pr-2 text-sm ${
+        className={`flex items-center gap-2 border-l-2 py-2 pl-3 pr-2 text-sm lg:text-[15px] ${
           active ? 'border-accent bg-edge/40' : 'border-transparent hover:bg-edge/25'
         }`}
       >
@@ -33,6 +33,7 @@ const HeroItem = memo(function HeroItem({ hero }: { hero: HeroRow }) {
           src={hero.icon}
           alt=""
           loading="lazy"
+          decoding="async"
           draggable={false}
           referrerPolicy="no-referrer"
           className="size-8 shrink-0 rounded-lg border border-edge bg-ink object-cover"
@@ -45,7 +46,7 @@ const HeroItem = memo(function HeroItem({ hero }: { hero: HeroRow }) {
         >
           {hero.tier}
         </span>
-        <span className="w-14 shrink-0 text-right font-tnum text-xs tabular-nums">
+        <span className="w-14 shrink-0 text-right font-tnum text-xs font-semibold tabular-nums">
           {hero.winRate}%
         </span>
         <span className="w-12 shrink-0 text-right font-tnum text-xs tabular-nums text-muted">
@@ -87,7 +88,7 @@ export function HeroRail({ className = '' }: { className?: string }) {
           }
           aria-label="搜索英雄 / 拼音 / 别名"
           placeholder="搜索英雄 / 拼音 / 别名"
-          className="w-full rounded-lg border border-edge bg-ink px-3 py-2 text-sm outline-none placeholder:text-muted focus:border-accent"
+          className="w-full rounded-lg border border-edge bg-ink px-3 py-2 text-sm outline-none placeholder:text-muted focus:border-accent lg:text-[15px]"
         />
       </div>
 

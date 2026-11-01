@@ -15,7 +15,8 @@ import { formatCount } from '@/lib/format'
 import { RARITY_DOT, RARITY_LABEL } from '@/lib/rarity'
 import { TIER_BG } from '@/lib/tier'
 
-/** 面板骨架：圆角描边卡 + 小标题（正常一屏放得下；内容超高时由 main 的 lg 内滚兜底） */
+/** 面板骨架：圆角描边卡 + 小标题（正常一屏放得下；内容超高时由 main 的 lg 内滚兜底）。
+ *  标题层级与 hero/Panel.tsx 同款：移动端紧凑，lg 起放大加粗提色 */
 function Panel({
   title,
   aside,
@@ -29,9 +30,11 @@ function Panel({
 }) {
   return (
     <section className={`flex min-h-0 min-w-0 flex-col rounded-xl border border-edge bg-panel p-3 ${className}`}>
-      <h2 className="mb-1.5 flex shrink-0 items-center justify-between gap-2 text-xs font-semibold text-muted">
-        <span className="truncate">{title}</span>
-        {aside}
+      <h2 className="mb-1.5 flex shrink-0 items-center justify-between gap-2">
+        <span className="truncate text-xs font-semibold text-muted lg:text-xl lg:font-bold lg:text-txt">{title}</span>
+        {aside != null && aside !== false && (
+          <span className="shrink-0 text-xs font-normal text-muted">{aside}</span>
+        )}
       </h2>
       <div className="min-h-0 flex-1">{children}</div>
     </section>
@@ -56,7 +59,7 @@ function TopHeroRow({ hero }: { hero: HeroRow }) {
       <Link
         to="/hero/$id"
         params={{ id: String(hero.id) }}
-        className="flex items-center gap-2 rounded-md px-1.5 py-0.5 text-xs hover:bg-edge/25"
+        className="flex items-center gap-2 rounded-md px-1.5 py-0.5 text-xs hover:bg-edge/25 lg:text-[15px]"
       >
         <span className="w-5 shrink-0 text-right font-tnum text-[11px] tabular-nums text-muted">
           {hero.rank}
@@ -77,7 +80,7 @@ function TopHeroRow({ hero }: { hero: HeroRow }) {
         >
           {hero.tier}
         </span>
-        <span className="w-10 shrink-0 text-right font-tnum tabular-nums">{hero.winRate}%</span>
+        <span className="w-12 shrink-0 text-right font-tnum font-semibold tabular-nums">{hero.winRate}%</span>
       </Link>
     </li>
   )
@@ -87,7 +90,7 @@ function TopHeroRow({ hero }: { hero: HeroRow }) {
 function TopAugmentRow({ augment }: { augment: AugmentRow }) {
   const rarityLabel = RARITY_LABEL[augment.rarity] ?? augment.rarity
   return (
-    <li className="flex items-center gap-2 px-1.5 py-0.5 text-xs">
+    <li className="flex items-center gap-2 px-1.5 py-0.5 text-xs lg:text-[15px]">
       <span className="w-5 shrink-0 text-right font-tnum text-[11px] tabular-nums text-muted">
         {augment.rank}
       </span>
@@ -105,8 +108,8 @@ function TopAugmentRow({ augment }: { augment: AugmentRow }) {
         }
       />
       <span className="min-w-0 flex-1 truncate">{augment.name}</span>
-      <span className="w-11 shrink-0 text-right font-tnum tabular-nums">{augment.winRate}%</span>
-      <span className="w-14 shrink-0 text-right font-tnum tabular-nums whitespace-nowrap text-muted">
+      <span className="w-[3.5rem] shrink-0 text-right font-tnum font-semibold tabular-nums">{augment.winRate}%</span>
+      <span className="w-[4.5rem] shrink-0 text-right font-tnum tabular-nums whitespace-nowrap text-muted">
         {formatCount(augment.games)}
       </span>
     </li>
@@ -144,7 +147,7 @@ export function OverviewPage() {
       {/* 1. meta 卡 */}
       <Panel title="数据集">
         {meta ? (
-          <dl className="grid grid-cols-2 gap-x-3 gap-y-2 pt-0.5 text-xs">
+          <dl className="grid grid-cols-2 gap-x-3 gap-y-2 pt-0.5 text-xs lg:text-[15px]">
             <div>
               <dt className="text-muted">版本</dt>
               <dd className="mt-0.5 font-tnum font-semibold tabular-nums text-accent">
@@ -231,7 +234,7 @@ export function OverviewPage() {
               {multiTop.map((family: ItemFamily) => (
                 <li
                   key={family.id}
-                  className="flex items-center gap-2 border-b border-edge/40 px-1.5 py-0.5 text-xs last:border-b-0"
+                  className="flex items-center gap-2 border-b border-edge/40 px-1.5 py-0.5 text-xs last:border-b-0 lg:text-[15px]"
                 >
                   {/* 家族成员小图标（16px）+ 名称；icons 与 names 平行、查无兜底 null */}
                   <div className="flex min-w-0 flex-1 items-center gap-1.5">

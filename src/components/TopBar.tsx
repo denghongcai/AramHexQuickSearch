@@ -19,7 +19,7 @@ export function TopBar() {
             <path d="M16 5.5 26 11.25v9.5L16 26.5 6 20.75v-9.5z" />
           </svg>
         </span>
-        <span className="truncate text-[15px] font-semibold tracking-wide">海克斯大乱斗速查</span>
+        <span className="truncate text-base font-semibold tracking-wide lg:text-xl lg:font-bold">海克斯大乱斗速查</span>
       </div>
       {meta && (
         <p className="hidden shrink-0 items-center gap-2 font-tnum text-xs tabular-nums text-muted lg:flex">
