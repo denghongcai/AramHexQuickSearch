@@ -11,8 +11,11 @@ import { BottomNav } from './components/BottomNav'
 import { HeroRail } from './components/HeroRail'
 import { OverviewStrip } from './components/OverviewStrip'
 import { TopBar } from './components/TopBar'
+import { AboutPage } from './routes/AboutPage'
+import { AugmentsPage } from './routes/AugmentsPage'
 import { OverviewPage } from './routes/Overview'
 import { useHeroes } from './lib/api'
+import { parseRarity, type Rarity } from '@/lib/augments'
 
 /** 根布局：
  *  lg（≥1024px）— h-dvh 网格 360px+1fr，TopBar 56px，左右两栏各自内滚，整页无滚动条；
@@ -63,32 +66,14 @@ function HeroDetailPage() {
   )
 }
 
-/** /augments（Task 12 填充） */
-function AugmentsPage() {
-  return (
-    <section className="p-6">
-      <h2 className="text-lg font-semibold">海克斯强化</h2>
-      <p className="mt-2 text-sm text-muted">强化符文列表在 Task 12 填充。</p>
-    </section>
-  )
-}
-
-/** /about（Task 12 填充） */
-function AboutPage() {
-  return (
-    <section className="p-6">
-      <h2 className="text-lg font-semibold">关于</h2>
-      <p className="mt-2 text-sm text-muted">数据来源与口径说明在 Task 12 填充。</p>
-    </section>
-  )
-}
-
 const rootRoute = createRootRoute({
   component: RootLayout,
   // ?q=：英雄榜搜索词。声明在根路由，rail 在所有路由（lg 侧栏）都可见，各处均可读写。
   // q 为空/缺失时从 URL 上摘掉，保持地址干净。
-  validateSearch: (search: Record<string, unknown>): { q?: string } => ({
+  // ?rarity=：海克斯榜稀有度筛选（Task 12），空/非法值视为全部并从 URL 摘掉；q 的行为保持不变。
+  validateSearch: (search: Record<string, unknown>): { q?: string; rarity?: Rarity } => ({
     q: typeof search.q === 'string' && search.q ? search.q : undefined,
+    rarity: parseRarity(search.rarity),
   }),
   // 未知路径 → 回首页
   notFoundComponent: () => <Navigate to="/" replace />,
