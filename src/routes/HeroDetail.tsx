@@ -128,15 +128,13 @@ export function HeroDetailPage() {
       </header>
 
       <DetailSkeletonGrid>
-        {/* 左宽栏：出装流派（自然高）在上 → 海克斯表 flex-1 填满剩余、面板内微滚。
-            ⚠️ 两个组件是同父兄弟，key 必须带不同前缀——同 key 兄弟会让 React 在
-            切英雄时错误复用/残留节点（生产事故：出装面板随切换不断堆叠，
-            且生产版 React 不输出重复 key 警告） */}
+        {/* 左宽栏：出装流派在上，海克斯表填满剩余、面板内微滚。
+            两者 key 加前缀区分：同父兄弟同 key 会导致切英雄时节点残留 */}
         <div className="flex min-h-0 flex-col gap-3 lg:overflow-hidden">
           <BuildPanel key={`build-${hero.id}`} builds={hero.builds} className="shrink-0" />
           <AugmentTable key={`augments-${hero.id}`} hero={hero} className="min-h-0 flex-1" />
         </div>
-        {/* 右窄栏：召唤师技能 Top5 → 分段胜率（短面板，自然高堆叠） */}
+        {/* 右窄栏：召唤师技能 Top5 → 分段胜率 */}
         <div className="flex min-h-0 flex-col gap-3">
           <SpellList spells={hero.spells} />
           <BandBars bands={hero.bands} />
