@@ -9,12 +9,15 @@ import {
 } from '@tanstack/react-router'
 import { BottomNav } from './components/BottomNav'
 import { HeroRail } from './components/HeroRail'
+import { OverviewStrip } from './components/OverviewStrip'
 import { TopBar } from './components/TopBar'
-import { useHeroes, useMeta } from './lib/api'
+import { OverviewPage } from './routes/Overview'
+import { useHeroes } from './lib/api'
 
 /** 根布局：
  *  lg（≥1024px）— h-dvh 网格 360px+1fr，TopBar 56px，左右两栏各自内滚，整页无滚动条；
- *  <lg — 单列文档流，/ 即英雄榜整页，其余路由整页显示，底部固定 BottomNav。 */
+ *  <lg — 单列文档流：/ = 精简总览条（OverviewStrip）+ 英雄榜整页，其余路由整页显示，
+ *  底部固定 BottomNav。 */
 function RootLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const onHome = pathname === '/'
@@ -23,6 +26,9 @@ function RootLayout() {
     <div className="flex min-h-dvh flex-col bg-ink text-txt lg:h-dvh lg:overflow-hidden">
       <TopBar />
       <div className="flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[360px_1fr] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden">
+        {/* 移动端 / 专属（Task 8 移动 IA 决策）：总览条在列表上方；lg 下 display:none，
+            不占 grid 单元，下面 rail/main 两栏布局不受影响 */}
+        {onHome && <OverviewStrip className="lg:hidden" />}
         <HeroRail className={onHome ? '' : 'hidden lg:flex'} />
         <main
           className={[
@@ -38,23 +44,6 @@ function RootLayout() {
       </div>
       <BottomNav />
     </div>
-  )
-}
-
-/** / 总览（Task 10 填充） */
-function OverviewPage() {
-  const { data: meta } = useMeta()
-
-  return (
-    <section className="p-6">
-      <h2 className="text-lg font-semibold">总览</h2>
-      {meta && (
-        <p className="mt-2 font-tnum text-xs tabular-nums text-muted">
-          Patch {meta.patch} · {meta.heroCount} 英雄 · {meta.augmentCount} 海克斯
-        </p>
-      )}
-      <p className="mt-6 text-sm text-muted">总览内容在 Task 10 填充。</p>
-    </section>
   )
 }
 

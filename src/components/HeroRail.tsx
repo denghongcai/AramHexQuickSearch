@@ -3,15 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Link, useRouter, useRouterState, useSearch } from '@tanstack/react-router'
 import { heroQuery, useHeroes, type HeroRow } from '@/lib/api'
 import { filterHeroes } from '@/lib/search'
-
-/** tier → 色片配色（字面量写死，保证 Tailwind 扫描得到） */
-const TIER_CLASS: Record<string, string> = {
-  S: 'bg-tier-s text-ink',
-  A: 'bg-tier-a text-ink',
-  B: 'bg-tier-b text-ink',
-  C: 'bg-tier-c text-ink',
-  D: 'bg-tier-d text-ink',
-}
+import { TIER_BG } from '@/lib/tier'
 
 /** memo：hero 引用来自 React Query 缓存（稳定），导航时只有 active 布尔变化的行重渲染 */
 const HeroItem = memo(function HeroItem({ hero }: { hero: HeroRow }) {
@@ -47,8 +39,8 @@ const HeroItem = memo(function HeroItem({ hero }: { hero: HeroRow }) {
         />
         <span className="min-w-0 flex-1 truncate">{hero.name}</span>
         <span
-          className={`grid size-5 shrink-0 place-items-center rounded-md text-[11px] font-bold ${
-            TIER_CLASS[hero.tier] ?? 'bg-tier-c text-ink'
+          className={`grid size-5 shrink-0 place-items-center rounded-md text-[11px] font-bold text-ink ${
+            TIER_BG[hero.tier] ?? 'bg-tier-c'
           }`}
         >
           {hero.tier}
