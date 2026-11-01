@@ -1,0 +1,32 @@
+MIT License
+
+Copyright (c) 2026 Hongcai Deng
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+数据许可（DATA LICENSES）— 本仓库代码适用上述 MIT 许可；仓库内不含任何数据文件。
+构建时拉取的第三方数据适用其自身许可，使用时须遵守：
+
+- 统计数据：github.com/czgreat/aramhex-data — CC BY-NC 4.0（要求署名，禁止商用）
+- 出装/流派：海斗一图流公开数据（haidou.zhishitft.cn）
+- 静态资料：腾讯 game.gtimg.cn（英雄名/图标等）
+
+详见 README「数据来源与许可署名」与应用内「关于」页。

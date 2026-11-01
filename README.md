@@ -55,6 +55,7 @@ scripts/fetch-sources.mjs        scripts/analyze.mjs                 前端
 | `FRESH=1` | 强制重新抓取（忽略缓存命中） |
 | `ARAMHEX_LOCAL_DIR` | 用本地 aramhex-data 检出代替 clone/pull |
 | `HAIDOU_LOCAL_DIR` | 用本地海斗镜像代替 HTTP 抓取 |
+| `DEBUG=1` | 抓取阶段输出详细日志（如 gtimg 文件头部采样） |
 
 海斗整体不可用时降级为 `builds: null`（详情页出装面板显示「暂不可用」），不影响其余数据；只有 aramhex 首次 clone 失败才是致命错误。
 
@@ -65,6 +66,12 @@ scripts/fetch-sources.mjs        scripts/analyze.mjs                 前端
 - 腾讯 gtimg 静态资料 — <https://game.gtimg.cn/>（英雄名/图标等静态定义）。口径说明：仅取静态资料字段，统计口径与腾讯官方无关。
 
 本项目为**非商业**用途；各数据许可归来源所有。英雄/海克斯胜率的统计口径以 aramhex 为准，出装与流派的原始口径以海斗为准——两者样本与统计方法不同，页面内已按区块标注。
+
+## 已知取舍与延后项
+
+- **IME 组合输入未做缓冲**：搜索框在输入法组合期间每个按键都会同步到 `?q=`（URL 为 replace 模式，不产生历史记录）。实测可用（组合文本会命中拼音键），但未做 compositionstart/end 缓冲优化；如手感有问题可后续加缓冲。
+- **抓取并发池未提升为共享库**：`scripts/fetch-sources.mjs` 内的 8-worker pool 为该文件私有实现；若后续管线新增并发抓取需求，先把它提为 `scripts/lib/` 纯函数并补测试再复用。
+- 代码许可为 MIT（见 LICENSE）；数据许可独立（见上节），两者不相覆盖。
 
 ## 目录结构速览
 

@@ -33,7 +33,7 @@
 **Step 1: 初始化**
 
 ```bash
-cd /home/dhc/workspace/AramHexQuickSearch && git init -b main
+cd path/to/AramHexQuickSearch && git init -b main
 ```
 
 **Step 2: 写 package.json**

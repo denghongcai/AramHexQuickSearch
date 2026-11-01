@@ -10,8 +10,8 @@ import { TabBar, tabPanelProps, type TabDef } from './Tabs'
 /** 稀有度 tab：契约键序 棱彩→金→银，色点复用共享 RARITY_DOT 映射 */
 const RARITY_TABS: ReadonlyArray<TabDef<keyof HeroDetail['augments']>> = [
   { key: 'prismatic', label: '棱彩', dot: RARITY_DOT.prismatic },
-  { key: 'gold', label: '金色', dot: RARITY_DOT.gold },
-  { key: 'silver', label: '银色', dot: RARITY_DOT.silver },
+  { key: 'gold', label: '黄金', dot: RARITY_DOT.gold },
+  { key: 'silver', label: '白银', dot: RARITY_DOT.silver },
 ]
 
 /** 表头单元（sticky 沉在微滚容器顶上，滚动时保持列名可见） */
@@ -54,7 +54,7 @@ function AugmentRowLine({ row, index, overall }: { row: HeroAugmentRow; index: n
 }
 
 /**
- * 海克斯表（左宽栏）：棱彩/金色/银色三档 tab（默认棱彩），
+ * 海克斯表（左宽栏）：棱彩/黄金/白银三档 tab（默认棱彩），
  * 行 = 名称 / 胜率 / ±Δpp（相对该英雄全体胜率，±2pp 内中性）/ 场次；
  * lg 下表格在面板内微滚（一屏约束），<lg 限高 60dvh 随页面走。
  */
