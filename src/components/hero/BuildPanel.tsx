@@ -5,12 +5,13 @@ import { formatCount } from '@/lib/format'
 import { Panel } from './Panel'
 import { TabBar } from './Tabs'
 
-/** 装备名徽片（核心装 / 出门装 / 推荐装共用），flex-wrap 防窄栏溢出 */
+/** 装备名徽片（核心装 / 出门装 / 推荐装共用），flex-wrap 防窄栏溢出；
+ *  名单内允许重复装备名（真实数据如战士流出门装 双「增幅典籍」），key 需拼下标 */
 function ItemChips({ names }: { names: readonly string[] }) {
   return (
     <ul className="flex flex-wrap gap-1">
-      {names.map((name) => (
-        <li key={name} className="rounded border border-edge bg-ink px-1.5 py-0.5 text-[11px]">
+      {names.map((name, i) => (
+        <li key={`${name}-${i}`} className="rounded border border-edge bg-ink px-1.5 py-0.5 text-[11px]">
           {name}
         </li>
       ))}
