@@ -108,8 +108,8 @@ function TopAugmentRow({ augment }: { augment: AugmentRow }) {
         }
       />
       <span className="min-w-0 flex-1 truncate">{augment.name}</span>
-      <span className="w-[3.5rem] shrink-0 text-right font-tnum font-semibold tabular-nums">{augment.winRate}%</span>
-      <span className="w-[4.5rem] shrink-0 text-right font-tnum tabular-nums whitespace-nowrap text-muted">
+      <span className="w-14 shrink-0 text-right font-tnum font-semibold tabular-nums">{augment.winRate}%</span>
+      <span className="w-20 shrink-0 pr-1 text-right font-tnum tabular-nums whitespace-nowrap text-muted">
         {formatCount(augment.games)}
       </span>
     </li>
@@ -143,44 +143,42 @@ export function OverviewPage() {
   const singleFamilyCount = families.length - multiFamilies.length
 
   return (
-    <section className="grid gap-3 p-3 lg:h-full lg:grid-cols-2 lg:grid-rows-[auto_auto_minmax(0,1fr)]">
-      {/* 1. meta 卡 */}
-      <Panel title="数据集">
-        {meta ? (
-          <dl className="grid grid-cols-2 gap-x-3 gap-y-2 pt-0.5 text-xs lg:text-[15px]">
-            <div>
-              <dt className="text-muted">版本</dt>
-              <dd className="mt-0.5 font-tnum font-semibold tabular-nums text-accent">
-                Patch {meta.patch}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted">快照日期</dt>
-              <dd className="mt-0.5 font-tnum tabular-nums">{meta.snapshotAt.slice(0, 10)}</dd>
-            </div>
-            <div>
-              <dt className="text-muted">有效对局</dt>
-              <dd className="mt-0.5 font-tnum tabular-nums">{formatCount(meta.gamesValid)}场</dd>
-            </div>
-            <div>
-              <dt className="text-muted">英雄</dt>
-              <dd className="mt-0.5 font-tnum tabular-nums">{meta.heroCount} 名</dd>
-            </div>
-          </dl>
-        ) : (
-          <PendingRows rows={2} />
-        )}
-      </Panel>
+    <section className="grid gap-3 p-3 lg:h-full lg:grid-cols-3 lg:grid-rows-[minmax(0,1fr)_minmax(0,1fr)]">
+      {/* 1. 第一列上：meta 紧凑条 + Tier 分布（堆叠） */}
+      <div className="flex min-h-0 flex-col gap-3">
+        <Panel title="数据集">
+          {meta ? (
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-2 pt-0.5 text-xs lg:text-sm">
+              <div>
+                <dt className="text-muted">版本</dt>
+                <dd className="mt-0.5 font-tnum font-semibold tabular-nums text-accent">Patch {meta.patch}</dd>
+              </div>
+              <div>
+                <dt className="text-muted">快照日期</dt>
+                <dd className="mt-0.5 font-tnum tabular-nums">{meta.snapshotAt.slice(0, 10)}</dd>
+              </div>
+              <div>
+                <dt className="text-muted">有效对局</dt>
+                <dd className="mt-0.5 font-tnum tabular-nums">{formatCount(meta.gamesValid)}场</dd>
+              </div>
+              <div>
+                <dt className="text-muted">英雄</dt>
+                <dd className="mt-0.5 font-tnum tabular-nums">{meta.heroCount} 名</dd>
+              </div>
+            </dl>
+          ) : (
+            <PendingRows rows={2} />
+          )}
+        </Panel>
+        <Panel title="Tier 分布" className="min-h-0 flex-1">
+          <TierBar heroes={heroes} className="pt-0.5" />
+          <p className="mt-1 truncate text-[11px] text-muted">
+            {meta?.tierRule ?? '按胜率分位切档，详见「关于」页'}
+          </p>
+        </Panel>
+      </div>
 
-      {/* 2. Tier 分布条（桌面 / 移动端共用组件） */}
-      <Panel title="Tier 分布">
-        <TierBar heroes={heroes} className="pt-0.5" />
-        <p className="mt-1 truncate text-[11px] text-muted">
-          {meta?.tierRule ?? '按胜率分位切档，详见「关于」页'}
-        </p>
-      </Panel>
-
-      {/* 3. Top10 英雄迷你榜（行点击 → /hero/$id） */}
+      {/* 2. 第二列上：Top10 英雄迷你榜（行点击 → /hero/$id） */}
       <Panel title="英雄胜率 Top10">
         {heroesQ.isPending ? (
           <PendingRows rows={10} />
@@ -195,7 +193,7 @@ export function OverviewPage() {
         )}
       </Panel>
 
-      {/* 4. Top10 海克斯迷你榜（标题 → /augments） */}
+      {/* 3. 第三列上：Top10 海克斯迷你榜（标题 → /augments） */}
       <Panel
         title={
           <Link to="/augments" className="hover:text-accent">
@@ -216,11 +214,11 @@ export function OverviewPage() {
         )}
       </Panel>
 
-      {/* 5. 流派家族概览（只渲染多件家族，占满第三行） */}
+      {/* 4. 第二行整行：流派家族概览（只渲染多件家族；列表 sm 起双列、3xl 四列铺满宽度） */}
       <Panel
         title="流派家族 · 多件组合"
         aside={<span className="shrink-0 font-normal">核心位聚类 · 套数 = 覆盖出装数</span>}
-        className="lg:col-span-2"
+        className="lg:col-span-3"
       >
         {familiesQ.isPending ? (
           <PendingRows rows={5} />
@@ -230,7 +228,7 @@ export function OverviewPage() {
           <p className="px-1.5 py-2 text-xs text-muted">本版本没有聚出多件家族。</p>
         ) : (
           <>
-            <ul>
+            <ul className="grid gap-x-8 sm:grid-cols-2 3xl:grid-cols-4">
               {multiTop.map((family: ItemFamily) => (
                 <li
                   key={family.id}
