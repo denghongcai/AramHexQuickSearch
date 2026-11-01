@@ -33,20 +33,6 @@ pnpm deploy         # pnpm full 后 wrangler deploy 部署到 Cloudflare Workers
 
 **`build` 与 `full` 的区别**：`pnpm build` 仅构建前端产物，不触碰数据；`pnpm full` 才会拉取并重新分析数据源。日常改 UI 用 `build`，刷新数据（或首次构建/部署）用 `full`。
 
-## CI 自动部署（每日）
-
-`.github/workflows/deploy.yml`：每天北京时间 16:00（UTC 08:00）自动拉取最新数据并部署 Workers；也可在 Actions 页手动触发（Run workflow）。
-
-一次性配置（只有仓库所有者能做，凭据不进代码）：
-
-1. Cloudflare 控制台 → My Profile → API Tokens → 创建自定义令牌，权限：`Account / Workers Scripts / Edit`（建议再加 `Account / Account Settings / Read`）
-2. GitHub 仓库 → Settings → Secrets and variables → Actions → New repository secret，添加两个：
-   - `CLOUDFLARE_API_TOKEN` — 上一步的令牌
-   - `CLOUDFLARE_ACCOUNT_ID` — Cloudflare 控制台右侧栏的 Account ID
-3. 到 Actions 页手动跑一次 `deploy` 验证
-
-安全边界：公开仓库的 fork PR 拿不到 secrets，无法借 PR 部署；手动触发需要仓库 write 权限（仅所有者）；工作流文件只引用密钥名，不包含任何值。
-
 ## 构建管线
 
 ```
