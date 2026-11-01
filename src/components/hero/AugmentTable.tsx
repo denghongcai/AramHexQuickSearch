@@ -15,20 +15,20 @@ const RARITY_TABS: ReadonlyArray<TabDef<keyof HeroDetail['augments']>> = [
   { key: 'silver', label: '白银', dot: RARITY_DOT.silver },
 ]
 
-/** 表头单元（sticky 沉在微滚容器顶上，滚动时保持列名可见） */
-function HeadCell({ children, className = '', title }: { children: string; className?: string; title?: string }) {
-  return (
-    <th
-      title={title}
-      className={`sticky top-0 z-10 bg-panel px-1.5 py-1 font-normal ${className}`}
-    >
-      {children}
-    </th>
-  )
-}
+/**
+ * 海克斯强化（左宽栏，用户反馈两轮迭代后的形态）：
+ * - 单行 = # 图标 名称 胜率 ±pp；场次收进悬停提示（多列下列宽装不下，且胜率是主指标）
+ * - lg 起两列、2xl 三列的响应式网格——宽屏不再被单列长表浪费横向空间；
+ *   <lg 单列随页面滚动（限高 60dvh）
+ * - 密度：默认只渲染胜率前 COLLAPSED_COUNT 行，「展开全部」切换（aria-expanded）
+ * - 行序即榜单序；lowSample 整行灰显 + 徽片（±pp 不参与分色）
+ */
 
-/** 单行：# 图标+名称 胜率 ±pp 场次；lowSample 整行灰显降权（±pp 不参与分色） */
-function AugmentRowLine({
+/** 折叠态每档最多展示的行数（按 winRate 降序取前 N，行序即榜单序） */
+const COLLAPSED_COUNT = 12
+
+/** 单行（网格单元）：# 图标 名称 胜率 ±pp；场次与 ±pp 口径进 title 悬停 */
+function AugmentCell({
   row,
   index,
   overall,
@@ -43,49 +43,32 @@ function AugmentRowLine({
   const delta = ppDelta(row.winRate, overall)
 
   return (
-    <tr className={`border-t border-edge/40 ${row.lowSample ? 'text-muted opacity-60' : ''}`}>
-      <td className="px-1.5 py-1.5 text-right font-tnum tabular-nums text-muted">{index + 1}</td>
-      <td className="px-1.5 py-1.5">
-        <div className="flex items-center gap-2">
-          {/* 游戏内图标 22px；gtimg 索引缺该 id 时回落稀有度色点 */}
-          <GameIcon
-            src={row.icon}
-            size={22}
-            rounded="rounded-md"
-            fallback={<span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${RARITY_DOT[rarity]}`} />}
-          />
-          <span className="min-w-0 flex-1 truncate">
-            {row.name}
-            {row.lowSample && (
-              <span className="ml-1 rounded bg-edge/60 px-1 py-px align-middle text-[10px] text-muted">低样本</span>
-            )}
-          </span>
-        </div>
-      </td>
-      <td className="px-1.5 py-1.5 text-right font-tnum font-semibold tabular-nums">{row.winRate.toFixed(2)}%</td>
-      <td
-        title={`相对该英雄全体 ${formatDelta(delta)}pp`}
-        className={`px-1.5 py-1.5 text-right font-tnum tabular-nums ${row.lowSample ? '' : deltaClass(delta)}`}
+    <div
+      title={`场次 ${formatCount(row.games)} · 相对该英雄全体 ${formatDelta(delta)}pp`}
+      className={`flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1 ${row.lowSample ? 'text-muted opacity-60' : ''}`}
+    >
+      <span className="w-5 shrink-0 text-right font-tnum text-xs tabular-nums text-muted">{index + 1}</span>
+      <GameIcon
+        src={row.icon}
+        size={22}
+        rounded="rounded-md"
+        fallback={<span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${RARITY_DOT[rarity]}`} />}
+      />
+      <span className="min-w-0 flex-1 truncate">
+        {row.name}
+        {row.lowSample && (
+          <span className="ml-1 rounded bg-edge/60 px-1 py-px align-middle text-[10px] text-muted">低样本</span>
+        )}
+      </span>
+      <span className="shrink-0 font-tnum text-[15px] font-semibold tabular-nums">{row.winRate.toFixed(2)}%</span>
+      <span
+        className={`w-12 shrink-0 text-right font-tnum text-xs tabular-nums ${row.lowSample ? '' : deltaClass(delta)}`}
       >
         {formatDelta(delta)}
-      </td>
-      <td className="px-1.5 py-1.5 text-right font-tnum tabular-nums whitespace-nowrap text-muted">
-        {formatCount(row.games)}
-      </td>
-    </tr>
+      </span>
+    </div>
   )
 }
-
-/**
- * 海克斯表（左宽栏）：棱彩/黄金/白银三档 tab（默认棱彩），
- * 行 = 图标+名称 / 胜率 / ±Δpp（相对该英雄全体胜率，±2pp 内中性）/ 场次。
- * 密度整改（用户反馈信息密度太高）：默认只渲染胜率前 COLLAPSED_COUNT 行，
- * 「展开全部」按钮切换完整列表（aria-expanded 供读屏感知，切换文案随状态变化）；
- * lg 下表格在面板内微滚（一屏约束），<lg 限高 60dvh 随页面走。
- */
-
-/** 折叠态每档最多展示的行数（按 winRate 降序取前 N，行序即榜单序） */
-const COLLAPSED_COUNT = 12
 
 export function AugmentTable({ hero, className = '' }: { hero: HeroDetail; className?: string }) {
   const [rarity, setRarity] = useState<keyof HeroDetail['augments']>('prismatic')
@@ -94,7 +77,7 @@ export function AugmentTable({ hero, className = '' }: { hero: HeroDetail; class
   return (
     <Panel
       title="海克斯强化"
-      aside={<span className="shrink-0 font-normal">±pp = 相对该英雄全体胜率</span>}
+      aside={<span className="shrink-0 font-normal">±pp = 相对该英雄全体胜率 · 悬停看场次</span>}
       className={className}
     >
       <div className="flex h-full min-h-0 flex-col gap-1.5">
@@ -115,29 +98,13 @@ export function AugmentTable({ hero, className = '' }: { hero: HeroDetail; class
                 <p className="px-1.5 py-3 text-xs text-muted">该稀有度下暂无数据。</p>
               ) : (
                 <>
-                  <div className="max-h-[60dvh] min-h-0 flex-1 overflow-y-auto lg:max-h-none">
-                    <table className="w-full table-fixed border-collapse text-xs lg:text-[15px]">
-                      <thead>
-                        <tr className="text-left text-muted">
-                          <HeadCell className="w-8">#</HeadCell>
-                          <HeadCell>名称</HeadCell>
-                          {/* 列宽按 lg 15px 字号预留：胜率/±pp 5 位小数（60px）、场次「50.9 万」（80px） */}
-                          <HeadCell className="w-16 text-right">胜率</HeadCell>
-                          <HeadCell
-                            className="w-16 text-right"
-                            title="该海克斯胜率 − 该英雄全体胜率（百分数直接相减）"
-                          >
-                            ±pp
-                          </HeadCell>
-                          <HeadCell className="w-20 text-right">场次</HeadCell>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {visible.map((row, i) => (
-                          <AugmentRowLine key={row.id} row={row} index={i} overall={hero.ranking.winRate} rarity={key} />
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="min-h-0 flex-1 overflow-y-auto">
+                    {/* 宽屏多列（lg 两列 / 2xl 三列）压缩纵向空间；单元内名称截断，悬停看完整口径 */}
+                    <div className="grid gap-x-4 gap-y-0.5 lg:grid-cols-2 2xl:grid-cols-3">
+                      {visible.map((row, i) => (
+                        <AugmentCell key={row.id} row={row} index={i} overall={hero.ranking.winRate} rarity={key} />
+                      ))}
+                    </div>
                   </div>
                   {rows.length > COLLAPSED_COUNT && (
                     <button
