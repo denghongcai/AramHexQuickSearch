@@ -1,0 +1,141 @@
+import type { ReactNode } from 'react'
+import { Link, useParams } from '@tanstack/react-router'
+
+import { AugmentTable } from '@/components/hero/AugmentTable'
+import { BandBars } from '@/components/hero/BandBars'
+import { BuildPanel } from '@/components/hero/BuildPanel'
+import { SpellList } from '@/components/hero/SpellList'
+import { useHero, useHeroes } from '@/lib/api'
+import { formatCount } from '@/lib/format'
+import { TIER_BG } from '@/lib/tier'
+
+/** 桌面两栏（左宽海克斯表 / 右窄 320px 三面板）的骨架，加载与正常态共用 */
+function DetailSkeletonGrid({ children }: { children: ReactNode }) {
+  return (
+    <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_320px] lg:grid-rows-[minmax(0,1fr)]">
+      {children}
+    </div>
+  )
+}
+
+/** 加载占位：静态 JSON 通常一闪而过，只给块级骨架 */
+function PendingPage() {
+  return (
+    <section className="flex flex-col gap-3 p-3 lg:h-full">
+      <div className="h-[76px] shrink-0 animate-pulse rounded-xl border border-edge bg-panel" />
+      <DetailSkeletonGrid>
+        <div className="animate-pulse rounded-xl border border-edge bg-panel" />
+        <div className="flex flex-col gap-3">
+          {[5, 4, 6].map((rows, i) => (
+            <div key={i} className="space-y-1.5 rounded-xl border border-edge bg-panel p-3">
+              {Array.from({ length: rows }, (_, j) => (
+                <div key={j} className="h-4 animate-pulse rounded bg-edge/40" />
+              ))}
+            </div>
+          ))}
+        </div>
+      </DetailSkeletonGrid>
+    </section>
+  )
+}
+
+/** 错误态：404（不存在/无数据）与其它错误分开文案，给返回入口，不白屏 */
+function ErrorPage({ id, missing }: { id: string; missing: boolean }) {
+  return (
+    <section className="p-3">
+      <div className="rounded-xl border border-edge bg-panel p-8 text-center">
+        <p className="text-sm text-tier-d">
+          {missing ? `英雄 #${id} 不存在或暂无数据` : '英雄数据加载失败，请刷新重试'}
+        </p>
+        <Link
+          to="/"
+          className="mt-4 inline-block rounded-lg border border-edge px-3 py-1.5 text-xs text-muted hover:border-accent hover:text-accent"
+        >
+          ← 返回英雄榜
+        </Link>
+      </div>
+    </section>
+  )
+}
+
+/**
+ * /hero/$id 英雄详情（Task 11）：
+ * lg —— 头部一行 + 左宽右窄两栏，海克斯表在面板内微滚，整页一屏；
+ * <lg —— 单列文档流：头部 → 海克斯表 → 右栏三面板依次堆叠，BottomNav 不变。
+ */
+export function HeroDetailPage() {
+  const { id } = useParams({ strict: false }) as { id: string }
+  const heroQ = useHero(id)
+  // 详情 JSON 不含 tier：S 色片用英雄榜（rail 已缓存，无额外请求）里的档位补上
+  const tier = useHeroes().data?.heroes.find((hero) => String(hero.id) === id)?.tier
+
+  if (heroQ.isPending) return <PendingPage />
+  if (heroQ.isError) {
+    const message = heroQ.error instanceof Error ? heroQ.error.message : String(heroQ.error)
+    return <ErrorPage id={id} missing={message.includes('404')} />
+  }
+
+  const hero = heroQ.data
+
+  return (
+    <section className="flex flex-col gap-3 p-3 lg:h-full">
+      {/* 头部：图标 名称 称号 S色片 胜率 登场率 场次 名次 */}
+      <header className="flex shrink-0 items-center gap-3 rounded-xl border border-edge bg-panel p-3">
+        <img
+          src={hero.icon}
+          alt={`${hero.name} ${hero.title}`}
+          draggable={false}
+          referrerPolicy="no-referrer"
+          className="size-12 shrink-0 rounded-lg border border-edge bg-ink object-cover"
+        />
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h1 className="truncate text-lg font-semibold leading-6">{hero.name}</h1>
+            {tier && (
+              <span
+                title={`Tier ${tier}`}
+                className={`grid size-5 shrink-0 place-items-center rounded-md text-[11px] font-bold text-ink ${
+                  TIER_BG[tier] ?? 'bg-tier-c'
+                }`}
+              >
+                {tier}
+              </span>
+            )}
+          </div>
+          <p className="truncate text-xs text-muted">{hero.title}</p>
+        </div>
+        <dl className="ml-auto flex shrink-0 items-end gap-3 text-xs sm:gap-4">
+          <div className="text-right">
+            <dt className="text-muted">胜率</dt>
+            <dd className="mt-0.5 font-tnum text-base font-semibold leading-5 tabular-nums text-accent">
+              {hero.ranking.winRate.toFixed(2)}%
+            </dd>
+          </div>
+          <div className="text-right">
+            <dt className="text-muted">登场率</dt>
+            <dd className="mt-0.5 font-tnum leading-5 tabular-nums">{hero.ranking.pickRate.toFixed(2)}%</dd>
+          </div>
+          <div className="text-right">
+            <dt className="text-muted">场次</dt>
+            <dd className="mt-0.5 font-tnum leading-5 tabular-nums">{formatCount(hero.ranking.games)}</dd>
+          </div>
+          <div className="hidden text-right sm:block">
+            <dt className="text-muted">名次</dt>
+            <dd className="mt-0.5 font-tnum leading-5 tabular-nums">#{hero.ranking.rank}</dd>
+          </div>
+        </dl>
+      </header>
+
+      <DetailSkeletonGrid>
+        {/* 左宽栏：海克斯三档 tabs + 表格内部微滚（key：切英雄时重置 tab） */}
+        <AugmentTable key={hero.id} hero={hero} />
+        {/* 右窄栏：召唤师技能 Top5 → 分段胜率 → 出装流派，依次堆叠 */}
+        <div className="flex min-h-0 flex-col gap-3">
+          <SpellList spells={hero.spells} />
+          <BandBars bands={hero.bands} />
+          <BuildPanel key={hero.id} builds={hero.builds} />
+        </div>
+      </DetailSkeletonGrid>
+    </section>
+  )
+}

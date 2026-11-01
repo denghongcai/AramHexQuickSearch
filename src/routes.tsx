@@ -4,15 +4,14 @@ import {
   createRouter,
   Navigate,
   Outlet,
-  useParams,
   useRouterState,
 } from '@tanstack/react-router'
 import { BottomNav } from './components/BottomNav'
 import { HeroRail } from './components/HeroRail'
 import { OverviewStrip } from './components/OverviewStrip'
 import { TopBar } from './components/TopBar'
+import { HeroDetailPage } from './routes/HeroDetail'
 import { OverviewPage } from './routes/Overview'
-import { useHeroes } from './lib/api'
 
 /** 根布局：
  *  lg（≥1024px）— h-dvh 网格 360px+1fr，TopBar 56px，左右两栏各自内滚，整页无滚动条；
@@ -44,22 +43,6 @@ function RootLayout() {
       </div>
       <BottomNav />
     </div>
-  )
-}
-
-/** /hero/$id 详情（Task 11 填充） */
-function HeroDetailPage() {
-  const { id } = useParams({ strict: false }) as { id: string }
-  const { data } = useHeroes()
-  const hero = data?.heroes.find((h) => String(h.id) === id)
-
-  return (
-    <section className="p-6">
-      <h2 className="text-lg font-semibold">
-        {hero ? `${hero.name} · ${hero.title}` : `英雄 #${id}`}
-      </h2>
-      <p className="mt-2 text-sm text-muted">详情页在 Task 11 填充。</p>
-    </section>
   )
 }
 
