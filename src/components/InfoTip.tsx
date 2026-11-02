@@ -131,7 +131,7 @@ export function InfoTip({
               )}
             </span>
           )}
-          <span className="block">
+          <span className="block whitespace-pre-line">
             {(tip ?? []).map((s, i) => (
               <span key={i} className={s.hl ? 'font-semibold text-accent' : undefined}>
                 {s.text}

@@ -26,21 +26,21 @@ describe('stripRichTags（纯文本场景：aria/标题）', () => {
 })
 
 describe('richTextSegments（分段解析，hl = 游戏内高亮段）', () => {
-  it('items.js description：数值段高亮、<br> 拆段', () => {
+  it('items.js description：数值段高亮、<br> 拆行（\\n 保留）', () => {
     expect(
       richTextSegments('<mainText><stats><attention>50</attention>攻击力<br><attention>45%</attention>攻击速度</stats></mainText>'),
     ).toEqual([
       { text: '50', hl: true },
-      { text: '攻击力' },
+      { text: '攻击力\n' },
       { text: '45%', hl: true },
       { text: '攻击速度' },
     ])
   })
 
-  it('结构容器（mainText/stats）不产生分段，passive 同样高亮', () => {
+  it('结构容器（mainText/stats）不产生分段；被动名换行独立成节', () => {
     expect(richTextSegments('<mainText><passive>熟能生巧</passive><br>攻击时永久成长。</mainText>')).toEqual([
-      { text: '熟能生巧', hl: true },
-      { text: '攻击时永久成长。' },
+      { text: '\n熟能生巧', hl: true },
+      { text: '\n攻击时永久成长。' },
     ])
   })
 

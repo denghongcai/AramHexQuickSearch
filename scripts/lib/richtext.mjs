@@ -26,11 +26,12 @@ export function stripRichTags(s) {
 
 /**
  * 富文本 → 分段数组。规则（对 gtimg 两类源实测归纳）：
- * - <br> → 空格；
+ * - <br> → 换行符（游戏内每条属性独立一行，弹层用 whitespace-pre-line 渲染）；
  * - <mainText>/<stats> 为结构容器，不产生分段；
- * - 其余行内标签（attention/scaleXX/healing/…/passive）圈住的文字 → {text, hl:true}；
- * - 标签外文字 → {text}；
- * - 相邻分段自然交替，不做合并；@变量@ 占位符剔除。
+ * - <passive>（被动名）前强制换行 → 独立小节，hl 高亮；
+ * - 其余行内标签（attention/scaleXX/healing/…）圈住的文字 → {text, hl:true}；
+ * - 标签外文字 → {text}；@变量@ 占位符剔除；
+ * - 分段 text 内可含 \n（多行），段内横向空白折叠，每行 trim。
  * @param {string} s
  * @returns {Array<{text: string, hl?: true}>}
  */
@@ -40,8 +41,13 @@ export function richTextSegments(s) {
   let buf = ''
   let hl = false
   const flush = () => {
-    const t = buf.replace(/\s+/g, ' ').trim()
-    if (t !== '') segs.push(hl ? { text: t, hl: true } : { text: t })
+    const lines = buf
+      .replace(/[ \t]+/g, ' ')
+      .split('\n')
+      .map((l) => l.trim())
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+    if (lines.trim() !== '') segs.push(hl ? { text: lines, hl: true } : { text: lines })
     buf = ''
   }
   for (const tk of s.split(/(<[^>]+>)/g)) {
@@ -54,10 +60,17 @@ export function richTextSegments(s) {
     const closing = m[1] === '/'
     const tag = m[2].toLowerCase()
     if (tag === 'br') {
-      buf += ' '
+      buf += '\n'
       continue
     }
     if (tag === 'maintext' || tag === 'stats') continue
+    if (tag === 'passive' && !closing) {
+      // 被动名独立成节：先落段，再以换行开头开启新的高亮段
+      flush()
+      hl = true
+      buf = '\n'
+      continue
+    }
     // 行内样式标签开/闭：闭侧先把已积累文本按当前 hl 落段，再翻转状态
     flush()
     hl = !closing
