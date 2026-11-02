@@ -5,7 +5,7 @@ import { InfoTip } from '@/components/InfoTip'
 import type { HeroAugmentRow, HeroDetail } from '@/lib/api'
 import { deltaClass, formatDelta, ppDelta } from '@/lib/delta'
 import { formatCount } from '@/lib/format'
-import { RARITY_DOT } from '@/lib/rarity'
+import { RARITY_DOT, RARITY_LABEL } from '@/lib/rarity'
 import { Panel } from './Panel'
 import { TabBar, tabPanelProps, type TabDef } from './Tabs'
 
@@ -57,7 +57,11 @@ function AugmentCell({
       />
       <span className="min-w-0 flex-1 truncate text-[0.9375rem] lg:text-[1.0625rem]">
         {row.tip?.length ? (
-          <InfoTip tip={row.tip} label={`${row.name} 属性描述`}>
+          <InfoTip
+            tip={row.tip}
+            card={{ icon: row.icon, title: row.name, meta: `${RARITY_LABEL[rarity]}强化` }}
+            label={`${row.name} 属性描述`}
+          >
             <span className="cursor-pointer underline decoration-edge decoration-dotted underline-offset-2">
               {row.name}
             </span>

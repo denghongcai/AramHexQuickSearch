@@ -27,9 +27,13 @@ function ItemChips({ items }: { items: ReadonlyArray<ItemChip> }) {
         const inner = <ChipInner item={item} />
         return (
           <li key={`${item.id ?? item.name}-${i}`} className="flex items-center">
-            {item.tip?.length ? (
-              <InfoTip tip={item.tip} label={`${item.name} 属性`}>
-                <span className="flex cursor-pointer items-center gap-1.5 rounded-md border border-edge bg-ink px-2 py-1 text-sm transition-colors hover:border-accent/60">
+            {item.tip?.length || item.price ? (
+              <InfoTip
+                tip={item.tip}
+                card={{ icon: item.icon, title: item.name, price: item.price }}
+                label={`${item.name} 属性`}
+              >
+                <span className="flex cursor-pointer items-center gap-1.5 rounded-md border border-edge bg-ink px-2 py-1 text-sm transition-colors hover:border-rar-gold/60">
                   {inner}
                 </span>
               </InfoTip>

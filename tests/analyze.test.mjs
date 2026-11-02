@@ -279,13 +279,17 @@ describe('buildDataset → hero 明细', () => {
       const segs = e ? itemTipSegments(e) : []
       return segs.length > 0 ? segs : null
     }
+    const priceOf = (id) => {
+      const e = gtimgItemsFixture.find((x) => Number(x.itemId) === id)
+      return e && typeof e.price === 'string' && e.price !== '' ? e.price : null
+    }
     const expected = parseBuilds(yasuoJson, itemMeta, (id) => itemIcons[id] ?? null).map((b) => ({
       ...b,
       winRate: toPercent2dp(b.winRate),
       pickRate: toPercent2dp(b.pickRate),
-      core: { ...b.core, tips: b.core.itemIds.map(tipOf) },
-      starter: b.starter.map((it) => ({ ...it, tip: tipOf(it.id) })),
-      recommended: b.recommended.map((it) => ({ ...it, tip: tipOf(it.id) })),
+      core: { ...b.core, tips: b.core.itemIds.map(tipOf), prices: b.core.itemIds.map(priceOf) },
+      starter: b.starter.map((it) => ({ ...it, tip: tipOf(it.id), price: priceOf(it.id) })),
+      recommended: b.recommended.map((it) => ({ ...it, tip: tipOf(it.id), price: priceOf(it.id) })),
     }))
     expect(dataset.heroes[0].builds).toEqual(expected)
     // 钉死换算值：crit build 0.6/0.5 → 60/50，meta.units 的 percent2dp 对 builds 同样成立
@@ -297,7 +301,7 @@ describe('buildDataset → hero 明细', () => {
       'https://game.gtimg.cn/images/lol/act/img/item/3072.png',
     ])
     expect(dataset.heroes[0].builds[0].starter).toEqual([
-      { id: 1055, name: '多兰之刃', icon: 'https://game.gtimg.cn/images/lol/act/img/item/1055.png', tip: null },
+      { id: 1055, name: '多兰之刃', icon: 'https://game.gtimg.cn/images/lol/act/img/item/1055.png', tip: null, price: null },
     ])
     // 海斗索引里没有的英雄（fixture: demo-missing 文件缺失）→ builds null
     expect(dataset.heroes.find((h) => h.id === 1).builds).toBeNull()
@@ -530,7 +534,7 @@ describe('writeDataset', () => {
     expect(hero.builds[0].core.names).toEqual(['育恩塔尔荒野箭', '海妖杀手', '血手'])
     // Part B 图标契约：core.icons 平行数组 + starter 对象数组（icon 查 gtimg）
     expect(hero.builds[0].core.icons).toHaveLength(3)
-    expect(hero.builds[0].starter).toEqual([{ id: 1055, name: '多兰之刃', icon: 'https://game.gtimg.cn/images/lol/act/img/item/1055.png', tip: null }])
+    expect(hero.builds[0].starter).toEqual([{ id: 1055, name: '多兰之刃', icon: 'https://game.gtimg.cn/images/lol/act/img/item/1055.png', tip: null, price: null }])
     expect(Object.keys(hero.augments.silver[0])).toEqual(['id', 'name', 'icon', 'games', 'wins', 'winRate'])
   })
 

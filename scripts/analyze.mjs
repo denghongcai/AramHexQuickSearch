@@ -167,7 +167,8 @@ export function parseGtimgAugmentTips(json) {
  * 解析 gtimg items.js 的属性提示分段（description 富文本解析优先，plaintext 兜底，
  * 分段口径见 lib/richtext.mjs）。容错与 parseGtimgItemIcons 对齐（缺 id/文本跳过）。
  * @param {{items?: unknown}} json
- * @returns {Object<number, Array<{text: string, hl?: true}>>} itemId → 提示分段（空数组 = 无提示）
+ * @returns {Object<number, {tip: Array<{text: string, hl?: true}>, price: string|null}>}
+ *   itemId → {提示分段, 游戏内售价}；两者皆缺的条目不进表
  */
 export function parseGtimgItemTips(json) {
   const items = json?.items
@@ -179,7 +180,8 @@ export function parseGtimgItemTips(json) {
     const id = Number(entry?.itemId)
     if (!Number.isFinite(id)) continue
     const segs = itemTipSegments(entry)
-    if (segs.length > 0) tips[id] = segs
+    const price = typeof entry.price === 'string' && entry.price !== '' ? entry.price : null
+    if (segs.length > 0 || price) tips[id] = { tip: segs, price }
   }
   return tips
 }
@@ -353,7 +355,7 @@ export function buildDataset(cacheDirs, manifest = {}) {
   const itemTips = parseGtimgItemTips(readJsonFile(path.join(cacheDirs.gtimgDir, 'items.js')))
   // 装备图标查询（parseHaidou/家族聚类共用）；查无此装备兜底 null
   const itemIconLookup = (id) => itemIcons[id] ?? null
-  const itemTipLookup = (id) => itemTips[id] ?? []
+  const itemTipLookup = (id) => itemTips[id] ?? null
   const augments = aggregateAugments(aramhex.heroAugments, aramhex.augments, aramhex.excludedAugmentIds).map((row) => ({
     id: row.id,
     name: row.name,
@@ -394,9 +396,14 @@ export function buildDataset(cacheDirs, manifest = {}) {
       ...b,
       winRate: toPercent2dp(b.winRate),
       pickRate: toPercent2dp(b.pickRate),
-      core: { ...b.core, tips: b.core.itemIds.map((id) => itemTipLookup(id).length > 0 ? itemTipLookup(id) : null) },
-      starter: b.starter.map((it) => ({ ...it, tip: itemTipLookup(it.id).length > 0 ? itemTipLookup(it.id) : null })),
-      recommended: b.recommended.map((it) => ({ ...it, tip: itemTipLookup(it.id).length > 0 ? itemTipLookup(it.id) : null })),
+      core: {
+        ...b.core,
+        tips: b.core.itemIds.map((id) => itemTipLookup(id)?.tip ?? null),
+        prices: b.core.itemIds.map((id) => itemTipLookup(id)?.price ?? null),
+        prices: b.core.itemIds.map((id) => itemTipLookup(id)?.price ?? null),
+      },
+      starter: b.starter.map((it) => ({ ...it, tip: itemTipLookup(it.id)?.tip ?? null, price: itemTipLookup(it.id)?.price ?? null })),
+      recommended: b.recommended.map((it) => ({ ...it, tip: itemTipLookup(it.id)?.tip ?? null, price: itemTipLookup(it.id)?.price ?? null })),
     }))
   const missingAlias = []
   const allBuilds = []

@@ -9,7 +9,8 @@
       "name": "育恩塔尔荒野箭",
       "iconPath": "https://game.gtimg.cn/images/lol/act/img/item/3032.png",
       "description": "<mainText><stats><attention>65</attention>攻击力<br><attention>25%</attention>攻击速度</stats><br><br><passive>无尽狂怒</passive><br>攻击时，附加额外伤害。</mainText>",
-      "plaintext": "提供攻击力与攻击速度。"
+      "plaintext": "提供攻击力与攻击速度。",
+      "price": "3333"
     },
     {
       "itemId": "6672",

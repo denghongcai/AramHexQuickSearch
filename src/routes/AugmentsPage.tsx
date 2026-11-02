@@ -40,7 +40,15 @@ function AugmentTr({ augment }: { augment: AugmentRow }) {
           />
           <span className="min-w-0 truncate" title={augment.name}>
             {augment.tip?.length ? (
-              <InfoTip tip={augment.tip} label={`${augment.name} 属性描述`}>
+              <InfoTip
+                tip={augment.tip}
+                card={{
+                  icon: augment.icon,
+                  title: augment.name,
+                  meta: rarityLabel(augment.rarity),
+                }}
+                label={`${augment.name} 属性描述`}
+              >
                 <span className="cursor-pointer underline decoration-edge decoration-dotted underline-offset-2">
                   {augment.name}
                 </span>
@@ -77,7 +85,15 @@ function AugmentCard({ augment }: { augment: AugmentRow }) {
       />
       <div className="min-w-0 flex-1">
         {augment.tip?.length ? (
-          <InfoTip tip={augment.tip} label={`${augment.name} 属性描述`}>
+          <InfoTip
+            tip={augment.tip}
+            card={{
+              icon: augment.icon,
+              title: augment.name,
+              meta: rarityLabel(augment.rarity),
+            }}
+            label={`${augment.name} 属性描述`}
+          >
             <span className="block cursor-pointer truncate text-sm font-medium underline decoration-edge decoration-dotted underline-offset-2">
               {augment.name}
             </span>

@@ -137,6 +137,8 @@ export interface ItemChip {
   icon: string | null
   /** 游戏内属性提示分段（gtimg description/plaintext 解析）；缺省 = 无提示 */
   tip?: TipSegment[] | null
+  /** 游戏内售价（金币，gtimg price 原样字符串）；缺省 = 无价格 */
+  price?: string | null
 }
 
 /** hero/{id}.json：一个出装流派（winRate/pickRate 与 ranking 同口径的百分数 2 位小数） */
@@ -159,6 +161,8 @@ export interface HeroBuild {
     icons: Array<string | null>
     /** 与 itemIds 平行的属性提示分段（gtimg description 解析）；查无此装备为 null */
     tips: Array<TipSegment[] | null>
+    /** 与 itemIds 平行的游戏内售价（金币）；查无此装备为 null */
+    prices: Array<string | null>
   }
   /** 出门装（顺序即海斗源顺序） */
   starter: ItemChip[]
