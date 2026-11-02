@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import { GameIcon } from '@/components/GameIcon'
+import { InfoTip } from '@/components/InfoTip'
 import type { HeroAugmentRow, HeroDetail } from '@/lib/api'
 import { deltaClass, formatDelta, ppDelta } from '@/lib/delta'
 import { formatCount } from '@/lib/format'
@@ -55,7 +56,15 @@ function AugmentCell({
         fallback={<span aria-hidden="true" className={`size-3 shrink-0 rounded-full ${RARITY_DOT[rarity]}`} />}
       />
       <span className="min-w-0 flex-1 truncate text-[0.9375rem] lg:text-[1.0625rem]">
-        {row.name}
+        {row.tip?.length ? (
+          <InfoTip tip={row.tip} label={`${row.name} 属性描述`}>
+            <span className="cursor-pointer underline decoration-edge decoration-dotted underline-offset-2">
+              {row.name}
+            </span>
+          </InfoTip>
+        ) : (
+          row.name
+        )}
         {row.lowSample && (
           <span className="ml-1 rounded bg-edge/60 px-1 py-px align-middle text-[0.625rem] text-muted">低样本</span>
         )}

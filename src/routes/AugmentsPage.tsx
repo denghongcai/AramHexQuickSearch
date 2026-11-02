@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useRouter, useSearch } from '@tanstack/react-router'
 import { countByRarity, filterAugments, parseRarity, RARITIES, type Rarity } from '@/lib/augments'
 import { GameIcon } from '@/components/GameIcon'
+import { InfoTip } from '@/components/InfoTip'
 import { useAugments, type AugmentRow } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { RARITY_DOT, RARITY_LABEL, RARITY_TEXT } from '@/lib/rarity'
@@ -38,7 +39,15 @@ function AugmentTr({ augment }: { augment: AugmentRow }) {
             fallback={<span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`} />}
           />
           <span className="min-w-0 truncate" title={augment.name}>
-            {augment.name}
+            {augment.tip?.length ? (
+              <InfoTip tip={augment.tip} label={`${augment.name} 属性描述`}>
+                <span className="cursor-pointer underline decoration-edge decoration-dotted underline-offset-2">
+                  {augment.name}
+                </span>
+              </InfoTip>
+            ) : (
+              augment.name
+            )}
           </span>
         </div>
       </td>
@@ -67,7 +76,15 @@ function AugmentCard({ augment }: { augment: AugmentRow }) {
         fallback={<span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`} />}
       />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{augment.name}</p>
+        {augment.tip?.length ? (
+          <InfoTip tip={augment.tip} label={`${augment.name} 属性描述`}>
+            <span className="block cursor-pointer truncate text-sm font-medium underline decoration-edge decoration-dotted underline-offset-2">
+              {augment.name}
+            </span>
+          </InfoTip>
+        ) : (
+          <p className="truncate text-sm font-medium">{augment.name}</p>
+        )}
         <p className="mt-0.5 flex items-center gap-2 text-[0.6875rem] text-muted">
           <span className={RARITY_TEXT[augment.rarity]}>
             {rarityLabel(augment.rarity)}

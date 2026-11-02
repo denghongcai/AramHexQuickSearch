@@ -5,7 +5,8 @@
     "name_cn": "泰坦的坚决",
     "level": "kPrismatic",
     "large_Icon": "https://game.gtimg.cn/images/lol/act/img/rune/iamthejuggernaut_large.png",
-    "small_Icon": "https://game.gtimg.cn/images/lol/act/img/rune/iamthejuggernaut_small.png"
+    "small_Icon": "https://game.gtimg.cn/images/lol/act/img/rune/iamthejuggernaut_small.png",
+    "tooltip": "变为近战状态，并且获得攻击力、生命值、攻击速度、生命偷取和移动速度 (每个属性都基于舍弃的攻击距离而进一步提升)。"
   },
   {
     "augmentID": 1002,

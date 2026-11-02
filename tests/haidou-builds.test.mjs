@@ -66,9 +66,13 @@ describe('parseBuilds', () => {
 
   it('starter/recommended 取 item 对象数组映射为 [{name, icon}]（icon 缺省时 null）', () => {
     const crit = buildsA[0]
-    expect(crit.starter).toEqual([{ name: '多兰之刃', icon: null }])
+    expect(crit.starter).toEqual([{ id: 1055, name: '多兰之刃', icon: null }])
     expect(crit.recommended).toEqual(
-      ['育恩塔尔荒野箭', '海妖杀手', '血手', '狂战士胫甲', '多米尼克领主的致意'].map((name) => ({ name, icon: null })),
+      ['育恩塔尔荒野箭', '海妖杀手', '血手', '狂战士胫甲', '多米尼克领主的致意'].map((name, i) => ({
+        id: [3032, 6672, 3072, 3006, 3036][i],
+        name,
+        icon: null,
+      })),
     )
   })
 
@@ -77,7 +81,7 @@ describe('parseBuilds', () => {
     const withIcons = parseBuilds(heroA, itemMeta, (id) => icons[id])
     const crit = withIcons[0]
     expect(crit.core.icons).toEqual(['https://gtimg/3032.png', null, null])
-    expect(crit.starter).toEqual([{ name: '多兰之刃', icon: 'https://gtimg/1055.png' }])
+    expect(crit.starter).toEqual([{ id: 1055, name: '多兰之刃', icon: 'https://gtimg/1055.png' }])
     // 对象形态与 Map 形态同样接受（与 itemMeta 同款口径）
     expect(parseBuilds(heroA, itemMeta, icons)[0].core.icons).toEqual(crit.core.icons)
     expect(parseBuilds(heroA, itemMeta, new Map([[3032, 'u.png']]))[0].core.icons[0]).toBe('u.png')
@@ -96,10 +100,10 @@ describe('parseBuilds', () => {
     expect(buildsB[2].core.itemIds).toEqual([3742, 3065, 1043])
     expect(buildsB[2].core.names).toEqual(['兰顿之兆', '振奋盔甲', '1043'])
     // 1055/1054 不在 meta 里，但 starter 对象自带 name → 用对象 name
-    expect(buildsB[0].starter).toEqual([{ name: '多兰之刃', icon: null }])
-    expect(buildsB[2].starter).toEqual([{ name: '多兰之盾', icon: null }])
+    expect(buildsB[0].starter).toEqual([{ id: 1055, name: '多兰之刃', icon: null }])
+    expect(buildsB[2].starter).toEqual([{ id: 1054, name: '多兰之盾', icon: null }])
     // 2003 既不在 meta 里也没有 name 字段 → id 字符串
-    expect(buildsA[2].starter).toEqual([{ name: '多兰之刃', icon: null }, { name: '2003', icon: null }])
+    expect(buildsA[2].starter).toEqual([{ id: 1055, name: '多兰之刃', icon: null }, { id: 2003, name: '2003', icon: null }])
   })
 
   it('itemMeta 也接受 Map；缺省（null/undefined）时全部走兜底', () => {

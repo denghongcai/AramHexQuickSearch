@@ -7,6 +7,7 @@ import { afterAll, describe, expect, it } from 'vitest'
 import { buildDataset, parseGtimgAugmentIcons, parseGtimgItemIcons, toPercent2dp, writeDataset } from '../scripts/analyze.mjs'
 import { buildItemMeta, parseBuilds } from '../scripts/lib/haidou-builds.mjs'
 import { buildSearchKeys } from '../scripts/lib/search.mjs'
+import { augmentTipSegments, itemTipSegments } from '../scripts/lib/richtext.mjs'
 
 const FIXTURES = path.join(import.meta.dirname, 'fixtures')
 const CACHE_DIRS = {
@@ -242,7 +243,15 @@ describe('buildDataset → hero 明细', () => {
 
     const lee = dataset.heroes[1]
     expect(lee.augments.prismatic).toEqual([
-      { id: 1001, name: '泰坦的坚决', icon: 'https://game.gtimg.cn/images/lol/act/img/rune/iamthejuggernaut_small.png', games: 9000, wins: 4700, winRate: 52.22 },
+      {
+        id: 1001,
+        name: '泰坦的坚决',
+        icon: 'https://game.gtimg.cn/images/lol/act/img/rune/iamthejuggernaut_small.png',
+        games: 9000,
+        wins: 4700,
+        winRate: 52.22,
+        tip: augmentTipSegments(JSON.parse(fs.readFileSync(path.join(FIXTURES, 'gtimg/kiwi_augments.json'), 'utf8')).find((x) => x.augmentID === 1001)),
+      },
     ])
     expect(lee.augments.silver).toEqual([
       { id: 1134, name: '不破之盾', icon: null, games: 800, wins: 400, winRate: 50, lowSample: true },
@@ -264,10 +273,19 @@ describe('buildDataset → hero 明细', () => {
     const yasuoJson = JSON.parse(fs.readFileSync(path.join(FIXTURES, 'haidou/heroes/demo-yasuo.json'), 'utf8'))
     // analyze 给 parseBuilds 传的是 gtimg 装备图标查询（与产物逐字段对齐）
     const itemIcons = parseGtimgItemIcons(JSON.parse(fs.readFileSync(path.join(FIXTURES, 'gtimg/items.js'), 'utf8')))
+    const gtimgItemsFixture = JSON.parse(fs.readFileSync(path.join(FIXTURES, 'gtimg/items.js'), 'utf8')).items
+    const tipOf = (id) => {
+      const e = gtimgItemsFixture.find((x) => Number(x.itemId) === id)
+      const segs = e ? itemTipSegments(e) : []
+      return segs.length > 0 ? segs : null
+    }
     const expected = parseBuilds(yasuoJson, itemMeta, (id) => itemIcons[id] ?? null).map((b) => ({
       ...b,
       winRate: toPercent2dp(b.winRate),
       pickRate: toPercent2dp(b.pickRate),
+      core: { ...b.core, tips: b.core.itemIds.map(tipOf) },
+      starter: b.starter.map((it) => ({ ...it, tip: tipOf(it.id) })),
+      recommended: b.recommended.map((it) => ({ ...it, tip: tipOf(it.id) })),
     }))
     expect(dataset.heroes[0].builds).toEqual(expected)
     // 钉死换算值：crit build 0.6/0.5 → 60/50，meta.units 的 percent2dp 对 builds 同样成立
@@ -279,7 +297,7 @@ describe('buildDataset → hero 明细', () => {
       'https://game.gtimg.cn/images/lol/act/img/item/3072.png',
     ])
     expect(dataset.heroes[0].builds[0].starter).toEqual([
-      { name: '多兰之刃', icon: 'https://game.gtimg.cn/images/lol/act/img/item/1055.png' },
+      { id: 1055, name: '多兰之刃', icon: 'https://game.gtimg.cn/images/lol/act/img/item/1055.png', tip: null },
     ])
     // 海斗索引里没有的英雄（fixture: demo-missing 文件缺失）→ builds null
     expect(dataset.heroes.find((h) => h.id === 1).builds).toBeNull()
@@ -358,6 +376,9 @@ describe('buildDataset → augments（全量榜单）', () => {
         pickRate: 100,
         heroCount: 1,
         rank: 3,
+        tip: augmentTipSegments(
+          JSON.parse(fs.readFileSync(path.join(FIXTURES, 'gtimg/kiwi_augments.json'), 'utf8')).find((x) => x.augmentID === 1001),
+        ),
       },
     ])
   })
@@ -509,7 +530,7 @@ describe('writeDataset', () => {
     expect(hero.builds[0].core.names).toEqual(['育恩塔尔荒野箭', '海妖杀手', '血手'])
     // Part B 图标契约：core.icons 平行数组 + starter 对象数组（icon 查 gtimg）
     expect(hero.builds[0].core.icons).toHaveLength(3)
-    expect(hero.builds[0].starter).toEqual([{ name: '多兰之刃', icon: 'https://game.gtimg.cn/images/lol/act/img/item/1055.png' }])
+    expect(hero.builds[0].starter).toEqual([{ id: 1055, name: '多兰之刃', icon: 'https://game.gtimg.cn/images/lol/act/img/item/1055.png', tip: null }])
     expect(Object.keys(hero.augments.silver[0])).toEqual(['id', 'name', 'icon', 'games', 'wins', 'winRate'])
   })
 

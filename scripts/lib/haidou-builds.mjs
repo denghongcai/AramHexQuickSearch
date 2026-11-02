@@ -117,8 +117,8 @@ function metaLookup(itemMeta) {
  * @returns {Array<{key: string|undefined, name: string|undefined, sampleCount: number,
  *   pickRate: number, winRate: number, summary: string,
  *   core: {itemIds: number[], names: string[], icons: Array<string|null>},
- *   starter: Array<{name: string, icon: string|null}>,
- *   recommended: Array<{name: string, icon: string|null}>}>}
+ *   starter: Array<{id: number, name: string, icon: string|null}>,
+ *   recommended: Array<{id: number, name: string, icon: string|null}>}>}
  */
 export function parseBuilds(heroJson, itemMeta, itemIcon = null) {
   if (heroJson == null || typeof heroJson !== 'object' || Array.isArray(heroJson)) {
@@ -138,13 +138,14 @@ export function parseBuilds(heroJson, itemMeta, itemIcon = null) {
       : ''
 
   /**
-   * @type {(items: unknown) => Array<{name: string, icon: string|null}>}
-   * item 对象数组 → [{名称, 图标}]（缺 id 的脏条目跳过；名称三级兜底、图标查无即 null）
+   * @type {(items: unknown) => Array<{id: number, name: string, icon: string|null}>}
+   * item 对象数组 → [{id, 名称, 图标}]（缺 id 的脏条目跳过；名称三级兜底、图标查无即 null）。
+   * id 供 analyze 层 join 装备属性描述（gtimg items.js）
    */
   const toChips = (items) =>
     (Array.isArray(items) ? items : [])
       .filter((it) => it != null && typeof it === 'object' && Number.isFinite(it.id))
-      .map((it) => ({ name: resolveName(it.id, it, lookup), icon: iconOf(it.id) ?? null }))
+      .map((it) => ({ id: it.id, name: resolveName(it.id, it, lookup), icon: iconOf(it.id) ?? null }))
 
   return builds.map((b, i) => {
     if (b == null || typeof b !== 'object') {

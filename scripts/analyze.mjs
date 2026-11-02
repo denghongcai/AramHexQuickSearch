@@ -32,6 +32,7 @@ import { parseAramhex } from './lib/aramhex.mjs'
 import { aggregateAugments, computeTiers, spellName, TIER_RULE } from './lib/aggregate.mjs'
 import { buildItemMeta, clusterItemFamilies, parseBuilds } from './lib/haidou-builds.mjs'
 import { isNotFound, readJsonFile } from './lib/json-file.mjs'
+import { augmentTipSegments, itemTipSegments } from './lib/richtext.mjs'
 import { DATA_DIR, SOURCES_JSON } from './lib/paths.mjs'
 import { buildSearchKeys } from './lib/search.mjs'
 
@@ -141,6 +142,49 @@ export function parseGtimgItemIcons(json) {
 }
 
 /**
+ * 解析 gtimg kiwi_augments.json 的提示分段（tooltip 纯文本优先，desc 富文本解析，
+ * 分段口径见 lib/richtext.mjs）。容错与 parseGtimgAugmentIcons 完全一致。
+ * @param {unknown} json
+ * @returns {Map<number, Array<{text: string, hl?: true}>>} augmentID → 提示分段（空数组 = 无提示）
+ */
+export function parseGtimgAugmentTips(json) {
+  if (!Array.isArray(json)) {
+    throw new Error(`parseGtimgAugmentTips: kiwi_augments.json 应为数组，收到 ${json == null ? String(json) : typeof json}`)
+  }
+  const tips = new Map()
+  for (const entry of json) {
+    const id = Number(entry?.augmentID)
+    if (!Number.isFinite(id)) {
+      throw new Error(`parseGtimgAugmentTips: 条目缺数字 augmentID: ${JSON.stringify(entry)?.slice(0, 120)}`)
+    }
+    const segs = augmentTipSegments(entry)
+    if (!tips.has(id)) tips.set(id, segs)
+  }
+  return tips
+}
+
+/**
+ * 解析 gtimg items.js 的属性提示分段（description 富文本解析优先，plaintext 兜底，
+ * 分段口径见 lib/richtext.mjs）。容错与 parseGtimgItemIcons 对齐（缺 id/文本跳过）。
+ * @param {{items?: unknown}} json
+ * @returns {Object<number, Array<{text: string, hl?: true}>>} itemId → 提示分段（空数组 = 无提示）
+ */
+export function parseGtimgItemTips(json) {
+  const items = json?.items
+  if (!Array.isArray(items)) {
+    throw new Error(`parseGtimgItemTips: items.js 应含 items 数组，收到 ${json == null ? String(json) : typeof json?.items}`)
+  }
+  const tips = {}
+  for (const entry of items) {
+    const id = Number(entry?.itemId)
+    if (!Number.isFinite(id)) continue
+    const segs = itemTipSegments(entry)
+    if (segs.length > 0) tips[id] = segs
+  }
+  return tips
+}
+
+/**
  * 解析海斗 data 层（index.json + items/index.json + heroes/{slug}.json）。
  * slug→heroId 映射以 index.json 的 guides[].id 为准（实测即英雄数字 id）。
  * @param {string} haidouDataDir 含 index.json 的目录（manifest.haidouDir 下的 data/）
@@ -244,7 +288,7 @@ function buildSpells(combos) {
  * 上游已不含这些 id，这里是防御：上游口径回退时不让脏行悄悄进产物。
  * 图标来自 gtimg kiwi 索引（small 优先）；查无此 id 输出 null（UI 色点兜底）。
  */
-function buildHeroAugments(heroId, entries, augmentsMeta, excludedAugmentIds, augmentIcons) {
+function buildHeroAugments(heroId, entries, augmentsMeta, excludedAugmentIds, augmentIcons, augmentTips) {
   const groups = {}
   for (const rarity of AUGMENT_RARITIES) groups[rarity] = []
   const excluded = new Set((excludedAugmentIds ?? []).map(Number))
@@ -267,6 +311,8 @@ function buildHeroAugments(heroId, entries, augmentsMeta, excludedAugmentIds, au
       wins: s.wins,
       winRate: toPercent2dp(s.winRate),
     }
+    const tip = augmentTips?.get(id) ?? []
+    if (tip.length > 0) row.tip = tip
     if (s.lowSample) row.lowSample = true
     bucket.push(row)
   }
@@ -302,8 +348,12 @@ export function buildDataset(cacheDirs, manifest = {}) {
   // 3b. gtimg 图标索引：海克斯（kiwi，small 优先）与装备（items.js）两张查询表
   const augmentIcons = parseGtimgAugmentIcons(readJsonFile(path.join(cacheDirs.gtimgDir, 'kiwi_augments.json')))
   const itemIcons = parseGtimgItemIcons(readJsonFile(path.join(cacheDirs.gtimgDir, 'items.js')))
+  // 3b+. gtimg 提示分段索引：海克斯属性描述与装备属性描述（游戏内高亮分段）
+  const augmentTips = parseGtimgAugmentTips(readJsonFile(path.join(cacheDirs.gtimgDir, 'kiwi_augments.json')))
+  const itemTips = parseGtimgItemTips(readJsonFile(path.join(cacheDirs.gtimgDir, 'items.js')))
   // 装备图标查询（parseHaidou/家族聚类共用）；查无此装备兜底 null
   const itemIconLookup = (id) => itemIcons[id] ?? null
+  const itemTipLookup = (id) => itemTips[id] ?? []
   const augments = aggregateAugments(aramhex.heroAugments, aramhex.augments, aramhex.excludedAugmentIds).map((row) => ({
     id: row.id,
     name: row.name,
@@ -316,6 +366,10 @@ export function buildDataset(cacheDirs, manifest = {}) {
     heroCount: row.heroCount,
     rank: row.rank,
   }))
+  for (const row of augments) {
+    const tip = augmentTips.get(row.id) ?? []
+    if (tip.length > 0) row.tip = tip
+  }
   const tiers = computeTiers(aramhex.heroes)
 
   // 4. 海斗（可选源）：可用性以 manifest 的 haidouDir 为准，绝不看磁盘目录
@@ -333,8 +387,17 @@ export function buildDataset(cacheDirs, manifest = {}) {
   // builds 的 winRate/pickRate 也在此统一转 percent2dp：整个数据集一种口径，
   // meta.units 的声明才为真（parseBuilds 保持海斗源口径透传，见其 JSDoc）。
   // 缺 winRate/pickRate 的 build 会被 toPercent2dp 拒绝 → 构建期硬错误。
+  // 同时把装备提示分段（gtimg items.js，按 item id join）挂到核心装/出门装/推荐装上，
+  // 供前端悬停/点击弹 tips；查无分段为 null（与 icons 同款平行数组口径）。
   const toPercentBuilds = (builds) =>
-    builds.map((b) => ({ ...b, winRate: toPercent2dp(b.winRate), pickRate: toPercent2dp(b.pickRate) }))
+    builds.map((b) => ({
+      ...b,
+      winRate: toPercent2dp(b.winRate),
+      pickRate: toPercent2dp(b.pickRate),
+      core: { ...b.core, tips: b.core.itemIds.map((id) => itemTipLookup(id).length > 0 ? itemTipLookup(id) : null) },
+      starter: b.starter.map((it) => ({ ...it, tip: itemTipLookup(it.id).length > 0 ? itemTipLookup(it.id) : null })),
+      recommended: b.recommended.map((it) => ({ ...it, tip: itemTipLookup(it.id).length > 0 ? itemTipLookup(it.id) : null })),
+    }))
   const missingAlias = []
   const allBuilds = []
   const heroes = aramhex.heroes
@@ -366,7 +429,7 @@ export function buildDataset(cacheDirs, manifest = {}) {
         buildCount: builds ? builds.length : 0,
         bands: buildBands(h, aramhex.bands),
         spells: buildSpells(aramhex.spells[h.id]),
-        augments: buildHeroAugments(h.id, aramhex.heroAugments[h.id], aramhex.augments, aramhex.excludedAugmentIds, augmentIcons),
+        augments: buildHeroAugments(h.id, aramhex.heroAugments[h.id], aramhex.augments, aramhex.excludedAugmentIds, augmentIcons, augmentTips),
         builds,
       }
     })

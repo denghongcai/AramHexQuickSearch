@@ -50,6 +50,12 @@ export interface HeroesPayload {
   heroes: HeroRow[]
 }
 
+/** 游戏内提示分段：hl=true 的段前端用主题色加粗（对应游戏内数值/被动高亮） */
+export interface TipSegment {
+  text: string
+  hl?: true
+}
+
 /** augments.json 单行：全局海克斯排行（winRate/pickRate 已是百分数，2 位小数） */
 export interface AugmentRow {
   id: number
@@ -65,6 +71,8 @@ export interface AugmentRow {
   heroCount: number
   /** 按胜率降序的名次 */
   rank: number
+  /** 游戏内属性提示分段（gtimg kiwi tooltip/desc 解析）；缺省 = 无提示 */
+  tip?: TipSegment[] | null
 }
 
 export interface AugmentsPayload {
@@ -117,12 +125,18 @@ export interface HeroAugmentRow {
   winRate: number
   /** 样本过低（构建期阈值打标），UI 需灰显降权 */
   lowSample?: boolean
+  /** 游戏内属性提示分段（gtimg kiwi tooltip/desc 解析）；缺省 = 无提示 */
+  tip?: TipSegment[] | null
 }
 
-/** 装备徽片：名称 + 图标（出门装/推荐装/核心装共用；图标可 null） */
+/** 装备徽片：id + 名称 + 图标 + 属性提示（出门装/推荐装/核心装共用；图标可 null） */
 export interface ItemChip {
+  /** gtimg 装备 id（属性提示查询键） */
+  id: number
   name: string
   icon: string | null
+  /** 游戏内属性提示分段（gtimg description/plaintext 解析）；缺省 = 无提示 */
+  tip?: TipSegment[] | null
 }
 
 /** hero/{id}.json：一个出装流派（winRate/pickRate 与 ranking 同口径的百分数 2 位小数） */
@@ -138,7 +152,14 @@ export interface HeroBuild {
   winRate: number
   /** 玩法 tips，\n 分段 */
   summary: string
-  core: { itemIds: number[]; names: string[]; /** 与 itemIds/names 平行；查无此装备为 null */ icons: Array<string | null> }
+  core: {
+    itemIds: number[]
+    names: string[]
+    /** 与 itemIds/names 平行；查无此装备为 null */
+    icons: Array<string | null>
+    /** 与 itemIds 平行的属性提示分段（gtimg description 解析）；查无此装备为 null */
+    tips: Array<TipSegment[] | null>
+  }
   /** 出门装（顺序即海斗源顺序） */
   starter: ItemChip[]
   /** 推荐装名列表（按合成顺序） */

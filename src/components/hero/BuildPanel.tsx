@@ -1,26 +1,44 @@
 import { useState, type ReactNode } from 'react'
 
 import { GameIcon } from '@/components/GameIcon'
+import { InfoTip } from '@/components/InfoTip'
 import type { HeroBuild, ItemChip } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { Panel } from './Panel'
 import { TabBar, tabPanelProps } from './Tabs'
 
+/** 单枚装备徽片内容：28px 游戏图标 + 名称（查无图标只留名称兜底） */
+function ChipInner({ item }: { item: ItemChip }) {
+  return (
+    <>
+      <GameIcon src={item.icon} size={28} rounded="rounded-md" />
+      {item.name}
+    </>
+  )
+}
+
 /** 装备徽片（核心装 / 出门装 / 推荐装共用）：28px 游戏图标 + 名称，flex-wrap 防溢出；
- *  名单内允许重复装备名（真实数据如战士流出门装 双「增幅典籍」），key 需拼下标 */
+ *  名单内允许重复装备名（真实数据如战士流出门装 双「增幅典籍」），key 需拼下标；
+ *  有属性提示（tip）的装备可悬停/点击弹属性卡 */
 function ItemChips({ items }: { items: ReadonlyArray<ItemChip> }) {
   return (
     <ul className="flex flex-wrap gap-1.5">
-      {items.map((item, i) => (
-        <li
-          key={`${item.name}-${i}`}
-          className="flex items-center gap-1.5 rounded-md border border-edge bg-ink px-2 py-1 text-sm"
-        >
-          {/* gtimg 装备图标；查无此 id（icon null）时不渲染占位，只留名称兜底 */}
-          <GameIcon src={item.icon} size={28} rounded="rounded-md" />
-          {item.name}
-        </li>
-      ))}
+      {items.map((item, i) => {
+        const inner = <ChipInner item={item} />
+        return (
+          <li key={`${item.id ?? item.name}-${i}`} className="flex items-center">
+            {item.tip?.length ? (
+              <InfoTip tip={item.tip} label={`${item.name} 属性`}>
+                <span className="flex cursor-pointer items-center gap-1.5 rounded-md border border-edge bg-ink px-2 py-1 text-sm transition-colors hover:border-accent/60">
+                  {inner}
+                </span>
+              </InfoTip>
+            ) : (
+              <span className="flex items-center gap-1.5 rounded-md border border-edge bg-ink px-2 py-1 text-sm">{inner}</span>
+            )}
+          </li>
+        )
+      })}
     </ul>
   )
 }
@@ -98,7 +116,14 @@ export function BuildPanel({ builds, className = '' }: { builds: HeroBuild[] | n
               </div>
             </dl>
             <Field label="核心装">
-              <EmptyField items={build.core.names.map((name, i) => ({ name, icon: build.core.icons[i] ?? null }))} />
+              <EmptyField
+                items={build.core.names.map((name, i) => ({
+                  id: build.core.itemIds[i],
+                  name,
+                  icon: build.core.icons[i] ?? null,
+                  tip: build.core.tips?.[i] ?? null,
+                }))}
+              />
             </Field>
             <Field label="出门装">
               <EmptyField items={build.starter} />
