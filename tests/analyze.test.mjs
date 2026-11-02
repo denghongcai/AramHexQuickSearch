@@ -281,7 +281,10 @@ describe('buildDataset → hero 明细', () => {
     }
     const priceOf = (id) => {
       const e = gtimgItemsFixture.find((x) => Number(x.itemId) === id)
-      return e && typeof e.price === 'string' && e.price !== '' ? e.price : null
+      if (!e) return null
+      const total = typeof e.total === 'string' && e.total !== '' ? e.total : null
+      const price = typeof e.price === 'string' && e.price !== '' ? e.price : null
+      return total ?? price
     }
     const expected = parseBuilds(yasuoJson, itemMeta, (id) => itemIcons[id] ?? null).map((b) => ({
       ...b,

@@ -180,7 +180,9 @@ export function parseGtimgItemTips(json) {
     const id = Number(entry?.itemId)
     if (!Number.isFinite(id)) continue
     const segs = itemTipSegments(entry)
-    const price = typeof entry.price === 'string' && entry.price !== '' ? entry.price : null
+    // gtimg 的 price 是组件差价、total 才是完整售价（如海妖杀手 price=325 / total=3000）——
+    // 卡片展示必须用 total，price 仅在 total 缺失时兜底
+    const price = typeof entry.total === 'string' && entry.total !== '' ? entry.total : typeof entry.price === 'string' && entry.price !== '' ? entry.price : null
     if (segs.length > 0 || price) tips[id] = { tip: segs, price }
   }
   return tips
