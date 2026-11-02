@@ -54,13 +54,13 @@ function AugmentCell({
         rounded="rounded-md"
         fallback={<span aria-hidden="true" className={`size-3 shrink-0 rounded-full ${RARITY_DOT[rarity]}`} />}
       />
-      <span className="min-w-0 flex-1 truncate text-[15px] lg:text-[17px]">
+      <span className="min-w-0 flex-1 truncate text-[0.9375rem] lg:text-[1.0625rem]">
         {row.name}
         {row.lowSample && (
-          <span className="ml-1 rounded bg-edge/60 px-1 py-px align-middle text-[10px] text-muted">低样本</span>
+          <span className="ml-1 rounded bg-edge/60 px-1 py-px align-middle text-[0.625rem] text-muted">低样本</span>
         )}
       </span>
-      <span className="shrink-0 font-tnum text-base font-bold tabular-nums lg:text-[18px]">
+      <span className="shrink-0 font-tnum text-base font-bold tabular-nums lg:text-[1.125rem]">
         {row.winRate.toFixed(2)}%
       </span>
       <span

@@ -22,7 +22,7 @@ const HeroItem = memo(function HeroItem({ hero }: { hero: HeroRow }) {
         params={{ id: String(hero.id) }}
         onMouseEnter={prefetch}
         onFocus={prefetch}
-        className={`flex items-center gap-2 border-l-2 py-2 pl-3 pr-2 text-sm lg:text-[15px] ${
+        className={`flex items-center gap-2 border-l-2 py-2 pl-3 pr-2 text-sm lg:text-[0.9375rem] ${
           active ? 'border-accent bg-edge/40' : 'border-transparent hover:bg-edge/25'
         }`}
       >
@@ -40,7 +40,7 @@ const HeroItem = memo(function HeroItem({ hero }: { hero: HeroRow }) {
         />
         <span className="min-w-0 flex-1 truncate">{hero.name}</span>
         <span
-          className={`grid size-5 shrink-0 place-items-center rounded-md text-[11px] font-bold text-ink ${
+          className={`grid size-5 shrink-0 place-items-center rounded-md text-[0.6875rem] font-bold text-ink ${
             TIER_BG[hero.tier] ?? 'bg-tier-c'
           }`}
         >
@@ -120,7 +120,7 @@ export function HeroRail({ className = '' }: { className?: string }) {
           }}
           aria-label="搜索英雄 / 拼音 / 别名"
           placeholder="搜索英雄 / 拼音 / 别名"
-          className="w-full rounded-lg border border-edge bg-ink px-3 py-2 text-sm outline-none placeholder:text-muted focus:border-accent lg:text-[15px]"
+          className="w-full rounded-lg border border-edge bg-ink px-3 py-2 text-sm outline-none placeholder:text-muted focus:border-accent lg:text-[0.9375rem]"
         />
       </div>
 

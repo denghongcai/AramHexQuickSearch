@@ -68,7 +68,7 @@ export function AboutPage() {
             <span className="w-16 shrink-0 text-xs text-muted">统计数据</span>
             <span className="min-w-0 flex-1 basis-48">
               <ExtLink href={aramhex.url ?? ARAMHEX_URL}>czgreat/aramhex-data</ExtLink>
-              <span className="mt-0.5 block text-[11px] text-muted">
+              <span className="mt-0.5 block text-[0.6875rem] text-muted">
                 英雄榜 / 海克斯榜胜率统计来源
               </span>
             </span>
@@ -86,14 +86,14 @@ export function AboutPage() {
             <span className="w-16 shrink-0 text-xs text-muted">出装 / 流派</span>
             <span className="min-w-0 flex-1 basis-48">
               <ExtLink href={haidou.url ?? HAIDOU_URL}>海斗一图流公开数据（haidou.zhishitft.cn）</ExtLink>
-              <span className="mt-0.5 block text-[11px] text-muted">出装与流派家族的原始公开数据</span>
+              <span className="mt-0.5 block text-[0.6875rem] text-muted">出装与流派家族的原始公开数据</span>
             </span>
           </li>
           <li className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span className="w-16 shrink-0 text-xs text-muted">静态资料</span>
             <span className="min-w-0 flex-1 basis-48">
               <ExtLink href={gtimg.url ?? GTIMG_URL}>腾讯 game.gtimg.cn</ExtLink>
-              <span className="mt-0.5 block text-[11px] text-muted">英雄名称 / 头像等静态资源</span>
+              <span className="mt-0.5 block text-[0.6875rem] text-muted">英雄名称 / 头像等静态资源</span>
             </span>
           </li>
         </ul>

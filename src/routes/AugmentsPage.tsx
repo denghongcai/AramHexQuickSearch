@@ -68,7 +68,7 @@ function AugmentCard({ augment }: { augment: AugmentRow }) {
       />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{augment.name}</p>
-        <p className="mt-0.5 flex items-center gap-2 text-[11px] text-muted">
+        <p className="mt-0.5 flex items-center gap-2 text-[0.6875rem] text-muted">
           <span className={RARITY_TEXT[augment.rarity]}>
             {rarityLabel(augment.rarity)}
           </span>
@@ -110,7 +110,7 @@ export function AugmentsPage() {
       <header className="flex shrink-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
         <h2 className="text-base font-semibold lg:text-xl lg:font-bold">海克斯排行</h2>
         {/* 口径注记：pickRate 是「同稀有度内场次占比」，不是全局占比 */}
-        <p className="text-[11px] text-muted">登场率：稀有度内占比 · 按胜率降序</p>
+        <p className="text-[0.6875rem] text-muted">登场率：稀有度内占比 · 按胜率降序</p>
       </header>
 
       {/* 稀有度筛选 tabs（徽标数始终按全量统计，不随筛选变化） */}
@@ -164,7 +164,7 @@ export function AugmentsPage() {
         ) : (
           <>
             {/* 桌面表格：内部滚动，217 行不撑破右栏 */}
-            <table className="hidden w-full table-fixed border-separate border-spacing-0 text-sm lg:table lg:text-[15px]">
+            <table className="hidden w-full table-fixed border-separate border-spacing-0 text-sm lg:table lg:text-[0.9375rem]">
               <thead>
                 <tr>
                   <th className={`${TH} w-10 text-right`}>#</th>

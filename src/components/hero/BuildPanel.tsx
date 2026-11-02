@@ -108,7 +108,7 @@ export function BuildPanel({ builds, className = '' }: { builds: HeroBuild[] | n
             </Field>
             {build.summary && (
               <Field label="玩法">
-                <p className="whitespace-pre-line text-xs leading-relaxed text-muted lg:text-[15px]">{build.summary}</p>
+                <p className="whitespace-pre-line text-xs leading-relaxed text-muted lg:text-[0.9375rem]">{build.summary}</p>
               </Field>
             )}
           </div>

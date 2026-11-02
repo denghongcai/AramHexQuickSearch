@@ -59,9 +59,9 @@ function TopHeroRow({ hero }: { hero: HeroRow }) {
       <Link
         to="/hero/$id"
         params={{ id: String(hero.id) }}
-        className="flex items-center gap-2 rounded-md px-1.5 py-0.5 text-xs hover:bg-edge/25 lg:text-[15px]"
+        className="flex items-center gap-2 rounded-md px-1.5 py-0.5 text-xs hover:bg-edge/25 lg:text-[0.9375rem]"
       >
-        <span className="w-5 shrink-0 text-right font-tnum text-[11px] tabular-nums text-muted">
+        <span className="w-5 shrink-0 text-right font-tnum text-[0.6875rem] tabular-nums text-muted">
           {hero.rank}
         </span>
         <img
@@ -74,7 +74,7 @@ function TopHeroRow({ hero }: { hero: HeroRow }) {
         />
         <span className="min-w-0 flex-1 truncate">{hero.name}</span>
         <span
-          className={`grid size-4 shrink-0 place-items-center rounded text-[10px] font-bold text-ink ${
+          className={`grid size-4 shrink-0 place-items-center rounded text-[0.625rem] font-bold text-ink ${
             TIER_BG[hero.tier] ?? 'bg-tier-c'
           }`}
         >
@@ -90,8 +90,8 @@ function TopHeroRow({ hero }: { hero: HeroRow }) {
 function TopAugmentRow({ augment }: { augment: AugmentRow }) {
   const rarityLabel = RARITY_LABEL[augment.rarity] ?? augment.rarity
   return (
-    <li className="flex items-center gap-2 px-1.5 py-0.5 text-xs lg:text-[15px]">
-      <span className="w-5 shrink-0 text-right font-tnum text-[11px] tabular-nums text-muted">
+    <li className="flex items-center gap-2 px-1.5 py-0.5 text-xs lg:text-[0.9375rem]">
+      <span className="w-5 shrink-0 text-right font-tnum text-[0.6875rem] tabular-nums text-muted">
         {augment.rank}
       </span>
       <GameIcon
@@ -172,7 +172,7 @@ export function OverviewPage() {
         </Panel>
         <Panel title="Tier 分布" className="min-h-0 flex-1">
           <TierBar heroes={heroes} className="pt-0.5" />
-          <p className="mt-1 truncate text-[11px] text-muted">
+          <p className="mt-1 truncate text-[0.6875rem] text-muted">
             {meta?.tierRule ?? '按胜率分位切档，详见「关于」页'}
           </p>
         </Panel>
@@ -232,7 +232,7 @@ export function OverviewPage() {
               {multiTop.map((family: ItemFamily) => (
                 <li
                   key={family.id}
-                  className="flex items-center gap-2 border-b border-edge/40 px-1.5 py-0.5 text-xs last:border-b-0 lg:text-[15px]"
+                  className="flex items-center gap-2 border-b border-edge/40 px-1.5 py-0.5 text-xs last:border-b-0 lg:text-[0.9375rem]"
                 >
                   {/* 家族成员小图标（16px）+ 名称；icons 与 names 平行、查无兜底 null */}
                   <div className="flex min-w-0 flex-1 items-center gap-1.5">
@@ -258,7 +258,7 @@ export function OverviewPage() {
               ))}
             </ul>
             {singleFamilyCount > 0 && (
-              <p className="mt-1.5 px-1.5 text-[11px] text-muted">
+              <p className="mt-1.5 px-1.5 text-[0.6875rem] text-muted">
                 另有 {singleFamilyCount} 个单件家族未列入，聚类口径见「关于」页。
               </p>
             )}

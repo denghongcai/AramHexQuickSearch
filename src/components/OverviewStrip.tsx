@@ -42,7 +42,7 @@ export function OverviewStrip({ className = '' }: { className?: string }) {
               <li key={augment.id}>
                 <Link
                   to="/augments"
-                  className="flex max-w-full items-center gap-1 rounded-full border border-edge bg-ink px-2 py-0.5 text-[11px] hover:border-accent"
+                  className="flex max-w-full items-center gap-1 rounded-full border border-edge bg-ink px-2 py-0.5 text-[0.6875rem] hover:border-accent"
                 >
                   {/* 游戏内图标 20px（迷你榜口径）；缺图回落稀有度色点 */}
                   <GameIcon

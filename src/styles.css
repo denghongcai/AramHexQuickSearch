@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+@import "tailwindcss";
+
+/* 大屏根字号放大：全站 rem 尺寸（文字/间距/图标）随断点等比提升，
+   2xl(1536+) +6%，3xl(2000+) 约 +19%，解决 2K 屏整体显小的问题 */
+html {
+  font-size: 16px;
+}
+@media (min-width: 96rem) {
+  html {
+    font-size: 17px;
+  }
+}
+@media (min-width: 125rem) {
+  html {
+    font-size: 19px;
+  }
+}
+
 @theme {
   --color-ink: #0b1210; /* 页面底 */
   --color-panel: #111917; /* 面板 */

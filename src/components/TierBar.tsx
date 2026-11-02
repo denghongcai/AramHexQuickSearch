@@ -35,7 +35,7 @@ export function TierBar({ heroes, className = '' }: { heroes: Array<{ tier: stri
                 aria-pressed={active === seg.tier}
                 // flexGrow 按人数分宽（等价于按占比），段间 gap 吃进总宽、不会溢出容器
                 style={{ flexGrow: seg.count, flexBasis: 0 }}
-                className={`min-w-0 cursor-pointer text-center text-[10px] font-bold text-ink ${
+                className={`min-w-0 cursor-pointer text-center text-[0.625rem] font-bold text-ink ${
                   dimmed ? 'opacity-45' : 'hover:opacity-90'
                 } ${TIER_BG[seg.tier] ?? 'bg-tier-c'}`}
               >
@@ -44,7 +44,7 @@ export function TierBar({ heroes, className = '' }: { heroes: Array<{ tier: stri
             )
           })}
       </div>
-      <ul className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted">
+      <ul className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.6875rem] text-muted">
         {segs.map((seg) => (
           <li
             key={seg.tier}

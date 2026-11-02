@@ -13,7 +13,7 @@ const BAND_ROWS = [
 /** 单行：标签 + 横条（宽 = 胜率%）+ 胜率 + 场次 */
 function BandRow({ label, band }: { label: string; band: HeroBand }) {
   return (
-    <li className="flex items-center gap-2 text-xs lg:text-[15px]">
+    <li className="flex items-center gap-2 text-xs lg:text-[0.9375rem]">
       <span className="w-8 shrink-0 text-muted">{label}</span>
       <span aria-hidden="true" className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-edge/40">
         <span

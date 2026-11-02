@@ -95,7 +95,7 @@ export function HeroDetailPage() {
             {tier && (
               <span
                 title={`Tier ${tier}`}
-                className={`grid size-5 shrink-0 place-items-center rounded-md text-[11px] font-bold text-ink ${
+                className={`grid size-5 shrink-0 place-items-center rounded-md text-[0.6875rem] font-bold text-ink ${
                   TIER_BG[tier] ?? 'bg-tier-c'
                 }`}
               >
@@ -103,7 +103,7 @@ export function HeroDetailPage() {
               </span>
             )}
           </div>
-          <p className="truncate text-xs text-muted lg:text-[15px]">{hero.title}</p>
+          <p className="truncate text-xs text-muted lg:text-[0.9375rem]">{hero.title}</p>
         </div>
         <dl className="ml-auto flex shrink-0 items-end gap-3 text-xs sm:gap-4 lg:text-sm">
           <div className="text-right">
