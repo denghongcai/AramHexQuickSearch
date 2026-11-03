@@ -37,10 +37,18 @@ describe('richTextSegments（分段解析，hl = 游戏内高亮段）', () => {
     ])
   })
 
+  it('被动闭合后无 <br>：名称与描述仍分行（影焰实际形态）', () => {
+    expect(richTextSegments('<stats>110 法术强度 15 法术穿透</stats><passive>余烬绽放</passive>法术伤害和真实伤害会暴击。')).toEqual([
+      { text: '110 法术强度 15 法术穿透' },
+      { text: '\n余烬绽放', hl: true },
+      { text: '\n法术伤害和真实伤害会暴击。' },
+    ])
+  })
+
   it('结构容器（mainText/stats）不产生分段；被动名换行独立成节', () => {
     expect(richTextSegments('<mainText><passive>熟能生巧</passive><br>攻击时永久成长。</mainText>')).toEqual([
       { text: '\n熟能生巧', hl: true },
-      { text: '\n攻击时永久成长。' },
+      { text: '\n\n攻击时永久成长。' },
     ])
   })
 

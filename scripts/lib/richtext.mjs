@@ -71,6 +71,13 @@ export function richTextSegments(s) {
       buf = '\n'
       continue
     }
+    if (tag === 'passive' && closing) {
+      // 被动名闭合后强制换行（源数据里被动描述紧随其后，游戏内是分行渲染的）
+      flush()
+      hl = false
+      buf = '\n'
+      continue
+    }
     // 行内样式标签开/闭：闭侧先把已积累文本按当前 hl 落段，再翻转状态
     flush()
     hl = !closing
