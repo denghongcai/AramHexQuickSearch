@@ -43,12 +43,14 @@ export function richTextSegments(s) {
   /** 被动名闭合后置位：吞掉紧随的一个 <br>（避免叠出空行） */
   let swallowBreak = false
   const flush = () => {
+    // 横向空白折叠 + 每行 trim；连续换行（≥2）统一折叠为「一个空行」——
+    // 换行多了显乱，空行只用于区块分隔，绝不叠加
     const lines = buf
       .replace(/[ \t]+/g, ' ')
       .split('\n')
       .map((l) => l.trim())
       .join('\n')
-      .replace(/\n{3,}/g, '\n\n')
+      .replace(/\n{2,}/g, '\n\n')
     if (lines.trim() !== '') segs.push(hl ? { text: lines, hl: true } : { text: lines })
     buf = ''
   }
@@ -80,10 +82,11 @@ export function richTextSegments(s) {
       continue
     }
     if (tag === 'passive' && closing) {
-      // 被动名闭合后强制换行（源数据里被动描述紧随其后，游戏内是分行渲染的）
+      // 被动名独占一行，闭合后空一行再接描述（用户排版规范）；
+      // 若源数据紧随 <br>，配合 flush 的折叠也只会是一个空行
       flush()
       hl = false
-      buf = '\n'
+      buf = '\n\n'
       swallowBreak = true
       continue
     }
