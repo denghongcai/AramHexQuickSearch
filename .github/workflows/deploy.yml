@@ -3,7 +3,9 @@ name: deploy
 
 on:
   schedule:
-    - cron: '0 8 * * *'
+    # UTC 07:43 = 北京 15:43。避开整点档：GitHub 对整点 cron 高峰期限流，
+    # 严重时当次运行会被直接丢弃（实测 0 8 * * * 被跳过/延迟 10 小时）
+    - cron: '43 7 * * *'
   workflow_dispatch: {}
 
 permissions:
