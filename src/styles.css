@@ -1,6 +1,7 @@
 @import "tailwindcss";
-
-@import "tailwindcss";
+/* 自托管 MiSans VF（小米官方字体，免费商用；56 个 unicode-range 切片，
+   浏览器只下载页面用到的字形切片；weight 150-700 连续可变） */
+@import "@1adybug/mi-sans";
 
 /* 大屏根字号放大：全站 rem 尺寸（文字/间距/图标）随断点等比提升，
    2xl(1536+) +6%，3xl(2000+) 约 +19%，解决 2K 屏整体显小的问题 */
@@ -55,6 +56,7 @@ body {
      没有则按序优雅回落到系统字体；刻意不引入网络字体（国内网络 googlefonts 不可达）。
      基准字号：移动端维持 14px 紧凑，lg（≥1024px）起 15px（用户反馈 PC 字太小） */
   font-family:
+    "MiSans VF",
     "MiSans",
     "HarmonyOS Sans SC",
     "PingFang SC",
