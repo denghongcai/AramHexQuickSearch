@@ -41,7 +41,7 @@ describe('richTextSegments（分段解析，hl = 游戏内高亮段）', () => {
     expect(richTextSegments('<stats>110 法术强度 15 法术穿透</stats><passive>余烬绽放</passive>法术伤害和真实伤害会暴击。')).toEqual([
       { text: '110 法术强度 15 法术穿透' },
       { text: '\n余烬绽放', hl: true },
-      { text: '\n\n法术伤害和真实伤害会暴击。' },
+      { text: '\n法术伤害和真实伤害会暴击。' },
     ])
   })
 
@@ -49,7 +49,7 @@ describe('richTextSegments（分段解析，hl = 游戏内高亮段）', () => {
     // 被动闭合自带的 \n 吞掉紧随的 <br>：名称与描述间不叠空行
     expect(richTextSegments('<mainText><passive>熟能生巧</passive><br>攻击时永久成长。</mainText>')).toEqual([
       { text: '\n熟能生巧', hl: true },
-      { text: '\n\n攻击时永久成长。' },
+      { text: '\n攻击时永久成长。' },
     ])
   })
 

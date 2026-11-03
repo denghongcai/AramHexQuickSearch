@@ -82,11 +82,11 @@ export function richTextSegments(s) {
       continue
     }
     if (tag === 'passive' && closing) {
-      // 被动名独占一行，闭合后空一行再接描述（用户排版规范）；
-      // 若源数据紧随 <br>，配合 flush 的折叠也只会是一个空行
+      // 被动名独占一行，闭合后直接换行接描述（只要换行、不要空行）；
+      // swallowBreak 吞掉源数据紧随的 <br>，保证不叠出空行
       flush()
       hl = false
-      buf = '\n\n'
+      buf = '\n'
       swallowBreak = true
       continue
     }
