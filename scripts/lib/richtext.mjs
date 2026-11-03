@@ -51,7 +51,8 @@ export function richTextSegments(s) {
       .map((l) => l.trim())
       .join('\n')
       .replace(/\n{2,}/g, '\n\n')
-    if (lines.trim() !== '') segs.push(hl ? { text: lines, hl: true } : { text: lines })
+    // 只剔除纯空白；「只含换行符」的 buf 是有意义的断行（被动名闭合写入），保留
+    if (lines !== '' && lines.trim() !== '') segs.push(hl ? { text: lines, hl: true } : { text: lines })
     buf = ''
   }
   for (const tk of s.split(/(<[^>]+>)/g)) {
