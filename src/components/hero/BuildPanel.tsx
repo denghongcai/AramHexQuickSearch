@@ -107,15 +107,34 @@ export function BuildPanel({ builds, className = '' }: { builds: HeroBuild[] | n
       className={`min-h-0 flex-1 ${className}`}
     >
       <div className="flex h-full min-h-0 flex-col gap-2">
-        <TabBar
-          idPrefix="hero-builds"
-          label="出装流派"
-          tabs={list.map((build) => ({ key: build.key, label: build.name }))}
-          active={active.key}
-          onChange={setTab}
-        />
+        {/* tab 与该流派核心三指标同行：左 tab、右样本/胜率/登场率，压缩面板头部高度 */}
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <TabBar
+            idPrefix="hero-builds"
+            label="出装流派"
+            tabs={list.map((build) => ({ key: build.key, label: build.name }))}
+            active={active.key}
+            onChange={setTab}
+          />
+          <dl className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 text-xs lg:text-sm">
+            <div className="flex items-baseline gap-1">
+              <dt className="text-muted">样本</dt>
+              <dd className="font-tnum font-semibold tabular-nums">{formatCount(active.sampleCount)}场</dd>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <dt className="text-muted">胜率</dt>
+              <dd className="font-tnum text-base font-semibold tabular-nums text-accent lg:text-lg">
+                {active.winRate.toFixed(2)}%
+              </dd>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <dt className="text-muted">登场率</dt>
+              <dd className="font-tnum font-semibold tabular-nums">{active.pickRate.toFixed(2)}%</dd>
+            </div>
+          </dl>
+        </div>
         {/* 面板常驻 DOM（hidden 切换显隐）：每个 tab 的 aria-controls 都有落点，
-            id/labelledby 与 TabBar 同源（tabs.tsx）；lg 下内容超高在面板内微滚，<lg 随文档流展开 */}
+            id/labelledby 与 TabBar 同源（tabs.tsx） */}
         {list.map((build) => (
           <div
             key={build.key}
@@ -123,22 +142,6 @@ export function BuildPanel({ builds, className = '' }: { builds: HeroBuild[] | n
             hidden={build.key !== active.key}
             className="space-y-2.5"
           >
-            <dl className="grid grid-cols-3 gap-2 rounded-lg bg-ink px-3 py-2 text-sm lg:text-base">
-              <div>
-                <dt className="text-muted">样本</dt>
-                <dd className="mt-0.5 font-tnum font-semibold tabular-nums">{formatCount(build.sampleCount)}场</dd>
-              </div>
-              <div>
-                <dt className="text-muted">胜率</dt>
-                <dd className="mt-0.5 font-tnum text-base font-semibold tabular-nums text-accent lg:text-lg">
-                  {build.winRate.toFixed(2)}%
-                </dd>
-              </div>
-              <div>
-                <dt className="text-muted">登场率</dt>
-                <dd className="mt-0.5 font-tnum font-semibold tabular-nums">{build.pickRate.toFixed(2)}%</dd>
-              </div>
-            </dl>
             <Field label="核心装">
               <EmptyField
                 items={build.core.names.map((name, i) => ({
