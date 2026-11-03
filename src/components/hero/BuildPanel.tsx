@@ -116,20 +116,18 @@ export function BuildPanel({ builds, className = '' }: { builds: HeroBuild[] | n
             active={active.key}
             onChange={setTab}
           />
-          <dl className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 text-xs lg:text-sm">
+          <dl className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 text-xs">
             <div className="flex items-baseline gap-1">
               <dt className="text-muted">样本</dt>
-              <dd className="font-tnum font-semibold tabular-nums">{formatCount(active.sampleCount)}场</dd>
+              <dd className="font-tnum tabular-nums">{formatCount(active.sampleCount)}场</dd>
             </div>
             <div className="flex items-baseline gap-1">
               <dt className="text-muted">胜率</dt>
-              <dd className="font-tnum text-base font-semibold tabular-nums text-accent lg:text-lg">
-                {active.winRate.toFixed(2)}%
-              </dd>
+              <dd className="font-tnum font-semibold tabular-nums text-accent">{active.winRate.toFixed(2)}%</dd>
             </div>
             <div className="flex items-baseline gap-1">
               <dt className="text-muted">登场率</dt>
-              <dd className="font-tnum font-semibold tabular-nums">{active.pickRate.toFixed(2)}%</dd>
+              <dd className="font-tnum tabular-nums">{active.pickRate.toFixed(2)}%</dd>
             </div>
           </dl>
         </div>
