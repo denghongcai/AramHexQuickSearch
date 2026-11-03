@@ -139,6 +139,8 @@ export interface ItemChip {
   tip?: TipSegment[] | null
   /** 游戏内售价（金币，gtimg price 原样字符串）；缺省 = 无价格 */
   price?: string | null
+  /** 数值属性表（<stats> 块解析）；缺省 = 无属性 */
+  stats?: Array<{ name: string; pct: boolean; value: number }> | null
 }
 
 /** hero/{id}.json：一个出装流派（winRate/pickRate 与 ranking 同口径的百分数 2 位小数） */
@@ -163,7 +165,13 @@ export interface HeroBuild {
     tips: Array<TipSegment[] | null>
     /** 与 itemIds 平行的游戏内售价（金币）；查无此装备为 null */
     prices: Array<string | null>
+    /** 与 itemIds 平行的数值属性表；查无此装备为 [] */
+    stats: Array<Array<{ name: string; pct: boolean; value: number }>>
   }
+  /** 出门装属性合计（<stats> 数值聚合，值降序）；无则缺省 */
+  starterStats?: Array<{ name: string; pct: boolean; value: number }>
+  /** 推荐装属性合计；无则缺省 */
+  recommendedStats?: Array<{ name: string; pct: boolean; value: number }>
   /** 出门装（顺序即海斗源顺序） */
   starter: ItemChip[]
   /** 推荐装名列表（按合成顺序） */

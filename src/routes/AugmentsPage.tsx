@@ -32,31 +32,42 @@ function AugmentTr({ augment }: { augment: AugmentRow }) {
       <td className={TD}>
         <div className="flex items-center gap-2">
           {/* 游戏内图标 22px；gtimg 索引缺该 id 时回落稀有度色点 */}
-          <GameIcon
-            src={augment.icon}
-            size={22}
-            rounded="rounded-md"
-            fallback={<span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`} />}
-          />
-          <span className="min-w-0 truncate" title={augment.name}>
-            {augment.tip?.length ? (
-              <InfoTip
-                tip={augment.tip}
-                card={{
-                  icon: augment.icon,
-                  title: augment.name,
-                  meta: rarityLabel(augment.rarity),
-                }}
-                label={`${augment.name} 属性描述`}
-              >
-                <span className="cursor-pointer underline decoration-edge decoration-dotted underline-offset-2">
+          {augment.tip?.length ? (
+            <InfoTip
+              tip={augment.tip}
+              card={{
+                icon: augment.icon,
+                title: augment.name,
+                meta: rarityLabel(augment.rarity),
+              }}
+              label={`${augment.name} 属性描述`}
+              className="min-w-0 flex-1"
+            >
+              <span className="flex min-w-0 cursor-pointer items-center gap-2 rounded-md px-1 py-0.5 transition-colors hover:bg-edge/25">
+                <GameIcon
+                  src={augment.icon}
+                  size={22}
+                  rounded="rounded-md"
+                  fallback={<span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`} />}
+                />
+                <span className="min-w-0 truncate" title={augment.name}>
                   {augment.name}
                 </span>
-              </InfoTip>
-            ) : (
-              augment.name
-            )}
-          </span>
+              </span>
+            </InfoTip>
+          ) : (
+            <>
+              <GameIcon
+                src={augment.icon}
+                size={22}
+                rounded="rounded-md"
+                fallback={<span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`} />}
+              />
+              <span className="min-w-0 truncate" title={augment.name}>
+                {augment.name}
+              </span>
+            </>
+          )}
         </div>
       </td>
       <td className={`${TD} text-right font-tnum font-semibold tabular-nums`}>{augment.winRate}%</td>

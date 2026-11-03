@@ -12,7 +12,7 @@ import { TIER_BG } from '@/lib/tier'
 /** 桌面两栏（左宽：出装流派 + 海克斯表 / 右窄 320px：召唤师技能 + 分段）的骨架，加载与正常态共用 */
 function DetailSkeletonGrid({ children }: { children: ReactNode }) {
   return (
-    <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_320px] lg:grid-rows-[minmax(0,1fr)]">
+    <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
       {children}
     </div>
   )
@@ -21,7 +21,7 @@ function DetailSkeletonGrid({ children }: { children: ReactNode }) {
 /** 加载占位：静态 JSON 通常一闪而过，只给块级骨架 */
 function PendingPage() {
   return (
-    <section className="flex flex-col gap-3 p-3 lg:h-full">
+    <section className="flex flex-col gap-3 p-3">
       <div className="h-[76px] shrink-0 animate-pulse rounded-xl border border-edge bg-panel" />
       <DetailSkeletonGrid>
         <div className="animate-pulse rounded-xl border border-edge bg-panel" />
@@ -79,7 +79,7 @@ export function HeroDetailPage() {
   const hero = heroQ.data
 
   return (
-    <section className="flex flex-col gap-3 p-3 lg:h-full">
+    <section className="flex flex-col gap-3 p-3">
       {/* 头部：图标 名称 称号 S色片 胜率 登场率 场次 名次 */}
       <header className="flex shrink-0 items-center gap-3 rounded-xl border border-edge bg-panel p-3">
         <img
@@ -128,11 +128,11 @@ export function HeroDetailPage() {
       </header>
 
       <DetailSkeletonGrid>
-        {/* 左宽栏：出装流派在上，海克斯表填满剩余、面板内微滚。
+        {/* 左宽栏：出装流派在上，海克斯强化在下（自然高度，超出由 main 滚动）。
             两者 key 加前缀区分：同父兄弟同 key 会导致切英雄时节点残留 */}
-        <div className="flex min-h-0 flex-col gap-3 lg:overflow-hidden">
-          <BuildPanel key={`build-${hero.id}`} builds={hero.builds} className="shrink-0" />
-          <AugmentTable key={`augments-${hero.id}`} hero={hero} className="min-h-0 flex-1" />
+        <div className="flex min-w-0 flex-col gap-3">
+          <BuildPanel key={`build-${hero.id}`} builds={hero.builds} />
+          <AugmentTable key={`augments-${hero.id}`} hero={hero} />
         </div>
         {/* 右窄栏：召唤师技能 Top5 → 分段胜率 */}
         <div className="flex min-h-0 flex-col gap-3">

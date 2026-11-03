@@ -32,7 +32,7 @@ import { parseAramhex } from './lib/aramhex.mjs'
 import { aggregateAugments, computeTiers, spellName, TIER_RULE } from './lib/aggregate.mjs'
 import { buildItemMeta, clusterItemFamilies, parseBuilds } from './lib/haidou-builds.mjs'
 import { isNotFound, readJsonFile } from './lib/json-file.mjs'
-import { augmentTipSegments, itemTipSegments } from './lib/richtext.mjs'
+import { augmentTipSegments, itemStats, itemTipSegments } from './lib/richtext.mjs'
 import { DATA_DIR, SOURCES_JSON } from './lib/paths.mjs'
 import { buildSearchKeys } from './lib/search.mjs'
 
@@ -183,7 +183,8 @@ export function parseGtimgItemTips(json) {
     // gtimg 的 price 是组件差价、total 才是完整售价（如海妖杀手 price=325 / total=3000）——
     // 卡片展示必须用 total，price 仅在 total 缺失时兜底
     const price = typeof entry.total === 'string' && entry.total !== '' ? entry.total : typeof entry.price === 'string' && entry.price !== '' ? entry.price : null
-    if (segs.length > 0 || price) tips[id] = { tip: segs, price }
+    const stats = itemStats(entry.description)
+    if (segs.length > 0 || price) tips[id] = { tip: segs, price, stats }
   }
   return tips
 }
@@ -393,20 +394,59 @@ export function buildDataset(cacheDirs, manifest = {}) {
   // 缺 winRate/pickRate 的 build 会被 toPercent2dp 拒绝 → 构建期硬错误。
   // 同时把装备提示分段（gtimg items.js，按 item id join）挂到核心装/出门装/推荐装上，
   // 供前端悬停/点击弹 tips；查无分段为 null（与 icons 同款平行数组口径）。
+  // 装备提示分段/售价/属性表挂接 + 出门装/推荐装的属性合计聚合（合计行 UI 用）
   const toPercentBuilds = (builds) =>
-    builds.map((b) => ({
-      ...b,
-      winRate: toPercent2dp(b.winRate),
-      pickRate: toPercent2dp(b.pickRate),
-      core: {
+    builds.map((b) => {
+      const info = (id) => itemTipLookup(id)
+      const core = {
         ...b.core,
-        tips: b.core.itemIds.map((id) => itemTipLookup(id)?.tip ?? null),
-        prices: b.core.itemIds.map((id) => itemTipLookup(id)?.price ?? null),
-        prices: b.core.itemIds.map((id) => itemTipLookup(id)?.price ?? null),
-      },
-      starter: b.starter.map((it) => ({ ...it, tip: itemTipLookup(it.id)?.tip ?? null, price: itemTipLookup(it.id)?.price ?? null })),
-      recommended: b.recommended.map((it) => ({ ...it, tip: itemTipLookup(it.id)?.tip ?? null, price: itemTipLookup(it.id)?.price ?? null })),
-    }))
+        tips: b.core.itemIds.map((id) => info(id)?.tip ?? null),
+        prices: b.core.itemIds.map((id) => info(id)?.price ?? null),
+        stats: b.core.itemIds.map((id) => info(id)?.stats ?? []),
+      }
+      const starter = b.starter.map((it) => ({
+        ...it,
+        tip: info(it.id)?.tip ?? null,
+        price: info(it.id)?.price ?? null,
+        stats: info(it.id)?.stats ?? [],
+      }))
+      const recommended = b.recommended.map((it) => ({
+        ...it,
+        tip: info(it.id)?.tip ?? null,
+        price: info(it.id)?.price ?? null,
+        stats: info(it.id)?.stats ?? [],
+      }))
+      return {
+        ...b,
+        winRate: toPercent2dp(b.winRate),
+        pickRate: toPercent2dp(b.pickRate),
+        core,
+        starter,
+        recommended,
+        starterStats: sumItemStats(starter),
+        recommendedStats: sumItemStats(recommended),
+      }
+    })
+
+  /** 按属性名（含 % 区分）聚合数值，值降序；浮点尘埃归整到 2 位 */
+  function sumItemStats(chips) {
+    const idx = new Map()
+    const out = []
+    for (const c of chips) {
+      for (const s of c.stats ?? []) {
+        const key = (s.pct ? '%' : '') + s.name
+        const cur = idx.get(key)
+        if (cur) cur.value = Math.round((cur.value + s.value) * 100) / 100
+        else {
+          const row = { name: s.name, pct: s.pct, value: s.value }
+          idx.set(key, row)
+          out.push(row)
+        }
+      }
+    }
+    return out.sort((a, b) => b.value - a.value)
+  }
+
   const missingAlias = []
   const allBuilds = []
   const heroes = aramhex.heroes

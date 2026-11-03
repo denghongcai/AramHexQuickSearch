@@ -95,3 +95,89 @@ export function itemTipSegments(entry) {
   const plain = typeof entry.plaintext === 'string' ? entry.plaintext.trim() : ''
   return plain !== '' ? [{ text: plain }] : []
 }
+
+/**
+ * 装备属性表：解析 description 的 <stats> 块（数值 [可带 %] + 中文属性名 成对出现）。
+ * 例："50 攻击力  45% 攻击速度" → [{name:'攻击力', pct:false, value:50}, {name:'攻击速度', pct:true, value:45}]
+ * 无 <stats> 块（如消耗品生命药水）返回 []。
+ * @param {string} description
+ * @returns {Array<{name: string, pct: boolean, value: number}>}
+ */
+/**
+ * 极简 XML 片段解析器（无依赖）：把 gtimg 的类 XML 描述解析为节点树。
+ * 支持嵌套元素、自闭合（<br/>）、属性（attrs 原样字符串）与文本节点（#text）。
+ * 只处理良构片段——gtimg 数据源满足；异常输入按文本兜底，不抛错。
+ * @param {string} s
+ * @returns {{tag: string, attrs?: string, children: Array<object>, text?: string}}
+ */
+export function parseXmlFragment(s) {
+  const root = { tag: '#fragment', children: [] }
+  const stack = [root]
+  for (const tk of s.match(/<[^>]+>|[^<]+/g) ?? []) {
+    const top = stack[stack.length - 1]
+    const close = tk.match(/^<\/(\s*[a-zA-Z0-9-]+)\s*>$/)
+    if (close) {
+      if (stack.length > 1) stack.pop()
+      continue
+    }
+    const open = tk.match(/^<\s*([a-zA-Z0-9-]+)((?:\s+[^<>]*?)?)\s*(\/)?>$/)
+    if (open) {
+      const node = { tag: open[1].toLowerCase(), attrs: (open[2] ?? '').trim(), children: [] }
+      top.children.push(node)
+      // <br> 等 HTML 空元素没有闭合标签，不能压栈（否则后续节点全成其子节点）
+      if (!tk.endsWith('/>') && !['br', 'hr', 'img', 'meta'].includes(open[1].toLowerCase())) stack.push(node)
+      continue
+    }
+    top.children.push({ tag: '#text', text: tk.replace(/@[A-Za-z_][A-Za-z0-9_]*@/g, '') })
+  }
+  return root
+}
+
+/** 元素的直接文本内容（拼接 #text 子节点，折叠空白） */
+function elementText(node) {
+  return (node.children ?? [])
+    .filter((c) => c.tag === '#text')
+    .map((c) => c.text)
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/** 深度优先找第一个指定标签名的元素 */
+function findElement(node, tag) {
+  for (const c of node.children ?? []) {
+    if (c.tag === tag) return c
+    const hit = findElement(c, tag)
+    if (hit) return hit
+  }
+  return null
+}
+
+/** 装备属性表：正经解析 description 的 <stats> XML 块——数值元素 + 紧随文本节点（属性名）。
+ *  例：'<stats><attention>65</attention>攻击力<br><attention>25%</attention>攻击速度</stats>'
+ *  → [{name:'攻击力', pct:false, value:65}, {name:'攻击速度', pct:true, value:25}]
+ *  无 <stats> 块（如消耗品生命药水）返回 []。
+ * @param {string} description
+ * @returns {Array<{name: string, pct: boolean, value: number}>}
+ */
+export function itemStats(description) {
+  if (typeof description !== 'string') return []
+  const statsEl = findElement(parseXmlFragment(description), 'stats')
+  if (!statsEl) return []
+  const out = []
+  const kids = statsEl.children
+  for (let i = 0; i < kids.length; i++) {
+    const kid = kids[i]
+    if (kid.tag === '#text' || kid.tag === 'br') continue
+    const valueText = elementText(kid)
+    const value = parseFloat(valueText)
+    if (!Number.isFinite(value)) continue
+    // 属性名 = 数值元素之后紧邻的文本节点（如 <attention>25%</attention>攻击速度）
+    const nameNode = kids[i + 1]
+    const name = nameNode?.tag === '#text' ? nameNode.text.trim() : ''
+    if (name === '') continue
+    // % 在数值文本里（如 2.5%），不在属性名上
+    out.push({ name, pct: valueText.includes('%'), value })
+  }
+  return out
+}

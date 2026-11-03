@@ -7,7 +7,7 @@ import { afterAll, describe, expect, it } from 'vitest'
 import { buildDataset, parseGtimgAugmentIcons, parseGtimgItemIcons, toPercent2dp, writeDataset } from '../scripts/analyze.mjs'
 import { buildItemMeta, parseBuilds } from '../scripts/lib/haidou-builds.mjs'
 import { buildSearchKeys } from '../scripts/lib/search.mjs'
-import { augmentTipSegments, itemTipSegments } from '../scripts/lib/richtext.mjs'
+import { augmentTipSegments, itemStats, itemTipSegments } from '../scripts/lib/richtext.mjs'
 
 const FIXTURES = path.join(import.meta.dirname, 'fixtures')
 const CACHE_DIRS = {
@@ -286,13 +286,41 @@ describe('buildDataset → hero 明细', () => {
       const price = typeof e.price === 'string' && e.price !== '' ? e.price : null
       return total ?? price
     }
+    const statsOf = (id) => {
+      const e = gtimgItemsFixture.find((x) => Number(x.itemId) === id)
+      return e ? itemStats(e.description) : []
+    }
+    const sumStats = (chips) => {
+      const idx = new Map()
+      const out = []
+      for (const c of chips) {
+        for (const st of c.stats ?? []) {
+          const key = (st.pct ? '%' : '') + st.name
+          const cur = idx.get(key)
+          if (cur) cur.value = Math.round((cur.value + st.value) * 100) / 100
+          else {
+            const row = { name: st.name, pct: st.pct, value: st.value }
+            idx.set(key, row)
+            out.push(row)
+          }
+        }
+      }
+      return out.sort((a, b) => b.value - a.value)
+    }
     const expected = parseBuilds(yasuoJson, itemMeta, (id) => itemIcons[id] ?? null).map((b) => ({
       ...b,
       winRate: toPercent2dp(b.winRate),
       pickRate: toPercent2dp(b.pickRate),
-      core: { ...b.core, tips: b.core.itemIds.map(tipOf), prices: b.core.itemIds.map(priceOf) },
-      starter: b.starter.map((it) => ({ ...it, tip: tipOf(it.id), price: priceOf(it.id) })),
-      recommended: b.recommended.map((it) => ({ ...it, tip: tipOf(it.id), price: priceOf(it.id) })),
+      core: {
+        ...b.core,
+        tips: b.core.itemIds.map(tipOf),
+        prices: b.core.itemIds.map(priceOf),
+        stats: b.core.itemIds.map(statsOf),
+      },
+      starter: b.starter.map((it) => ({ ...it, tip: tipOf(it.id), price: priceOf(it.id), stats: statsOf(it.id) })),
+      recommended: b.recommended.map((it) => ({ ...it, tip: tipOf(it.id), price: priceOf(it.id), stats: statsOf(it.id) })),
+      starterStats: sumStats(b.starter.map((it) => ({ ...it, stats: statsOf(it.id) }))),
+      recommendedStats: sumStats(b.recommended.map((it) => ({ ...it, stats: statsOf(it.id) }))),
     }))
     expect(dataset.heroes[0].builds).toEqual(expected)
     // 钉死换算值：crit build 0.6/0.5 → 60/50，meta.units 的 percent2dp 对 builds 同样成立
@@ -304,7 +332,14 @@ describe('buildDataset → hero 明细', () => {
       'https://game.gtimg.cn/images/lol/act/img/item/3072.png',
     ])
     expect(dataset.heroes[0].builds[0].starter).toEqual([
-      { id: 1055, name: '多兰之刃', icon: 'https://game.gtimg.cn/images/lol/act/img/item/1055.png', tip: null, price: null },
+      {
+        id: 1055,
+        name: '多兰之刃',
+        icon: 'https://game.gtimg.cn/images/lol/act/img/item/1055.png',
+        tip: tipOf(1055),
+        price: null,
+        stats: statsOf(1055),
+      },
     ])
     // 海斗索引里没有的英雄（fixture: demo-missing 文件缺失）→ builds null
     expect(dataset.heroes.find((h) => h.id === 1).builds).toBeNull()
@@ -537,7 +572,22 @@ describe('writeDataset', () => {
     expect(hero.builds[0].core.names).toEqual(['育恩塔尔荒野箭', '海妖杀手', '血手'])
     // Part B 图标契约：core.icons 平行数组 + starter 对象数组（icon 查 gtimg）
     expect(hero.builds[0].core.icons).toHaveLength(3)
-    expect(hero.builds[0].starter).toEqual([{ id: 1055, name: '多兰之刃', icon: 'https://game.gtimg.cn/images/lol/act/img/item/1055.png', tip: null, price: null }])
+    expect(hero.builds[0].starter).toEqual([
+      {
+        id: 1055,
+        name: '多兰之刃',
+        icon: 'https://game.gtimg.cn/images/lol/act/img/item/1055.png',
+        tip: itemTipSegments(
+          JSON.parse(fs.readFileSync(path.join(FIXTURES, 'gtimg/items.js'), 'utf8')).items.find((x) => String(x.itemId) === '1055'),
+        ),
+        price: null,
+        stats: [
+          { name: '攻击力', pct: false, value: 10 },
+          { name: '生命值', pct: false, value: 80 },
+          { name: '全能吸血', pct: true, value: 2.5 },
+        ],
+      },
+    ])
     expect(Object.keys(hero.augments.silver[0])).toEqual(['id', 'name', 'icon', 'games', 'wins', 'winRate'])
   })
 

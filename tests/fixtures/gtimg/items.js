@@ -56,7 +56,9 @@
     {
       "itemId": "1055",
       "name": "多兰之刃",
-      "iconPath": "https://game.gtimg.cn/images/lol/act/img/item/1055.png"
+      "iconPath": "https://game.gtimg.cn/images/lol/act/img/item/1055.png",
+      "description": "<mainText><stats><attention>10</attention>攻击力<br><attention>80</attention>生命值<br><attention>2.5%</attention>全能吸血</stats></mainText>",
+      "plaintext": "提供攻击力、生命值与全能吸血。"
     },
     {
       "itemId": "1056",

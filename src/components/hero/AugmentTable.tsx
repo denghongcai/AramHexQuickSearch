@@ -49,30 +49,44 @@ function AugmentCell({
       className={`flex min-w-0 items-center gap-2.5 rounded-md px-1.5 py-1.5 ${row.lowSample ? 'text-muted opacity-60' : ''}`}
     >
       <span className="w-6 shrink-0 text-right font-tnum text-sm tabular-nums text-muted">{index + 1}</span>
-      <GameIcon
-        src={row.icon}
-        size={28}
-        rounded="rounded-md"
-        fallback={<span aria-hidden="true" className={`size-3 shrink-0 rounded-full ${RARITY_DOT[rarity]}`} />}
-      />
-      <span className="min-w-0 flex-1 truncate text-[0.9375rem] lg:text-[1.0625rem]">
-        {row.tip?.length ? (
-          <InfoTip
-            tip={row.tip}
-            card={{ icon: row.icon, title: row.name, meta: `${RARITY_LABEL[rarity]}强化` }}
-            label={`${row.name} 属性描述`}
-          >
-            <span className="cursor-pointer underline decoration-edge decoration-dotted underline-offset-2">
+      {row.tip?.length ? (
+        <InfoTip
+          tip={row.tip}
+          card={{ icon: row.icon, title: row.name, meta: `${RARITY_LABEL[rarity]}强化` }}
+          label={`${row.name} 属性描述`}
+          className="min-w-0 flex-1"
+        >
+          <span className="flex min-w-0 cursor-pointer items-center gap-2 rounded-md px-1 py-0.5 transition-colors hover:bg-edge/25">
+            <GameIcon
+              src={row.icon}
+              size={28}
+              rounded="rounded-md"
+              fallback={<span aria-hidden="true" className={`size-3 shrink-0 rounded-full ${RARITY_DOT[rarity]}`} />}
+            />
+            <span className="min-w-0 flex-1 truncate text-[0.9375rem] lg:text-[1.0625rem]">
               {row.name}
+              {row.lowSample && (
+                <span className="ml-1 rounded bg-edge/60 px-1 py-px align-middle text-[0.625rem] text-muted">低样本</span>
+              )}
             </span>
-          </InfoTip>
-        ) : (
-          row.name
-        )}
-        {row.lowSample && (
-          <span className="ml-1 rounded bg-edge/60 px-1 py-px align-middle text-[0.625rem] text-muted">低样本</span>
-        )}
-      </span>
+          </span>
+        </InfoTip>
+      ) : (
+        <>
+          <GameIcon
+            src={row.icon}
+            size={28}
+            rounded="rounded-md"
+            fallback={<span aria-hidden="true" className={`size-3 shrink-0 rounded-full ${RARITY_DOT[rarity]}`} />}
+          />
+          <span className="min-w-0 flex-1 truncate text-[0.9375rem] lg:text-[1.0625rem]">
+            {row.name}
+            {row.lowSample && (
+              <span className="ml-1 rounded bg-edge/60 px-1 py-px align-middle text-[0.625rem] text-muted">低样本</span>
+            )}
+          </span>
+        </>
+      )}
       <span className="shrink-0 font-tnum text-base font-bold tabular-nums lg:text-[1.125rem]">
         {row.winRate.toFixed(2)}%
       </span>
@@ -95,7 +109,7 @@ export function AugmentTable({ hero, className = '' }: { hero: HeroDetail; class
       aside={<span className="shrink-0 font-normal">±pp = 相对该英雄全体胜率 · 悬停看场次</span>}
       className={className}
     >
-      <div className="flex h-full min-h-0 flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5">
         <TabBar idPrefix="hero-augments" label="海克斯稀有度" tabs={RARITY_TABS} active={rarity} onChange={setRarity} />
         {/* 三个面板常驻 DOM（hidden 切换显隐）：每个 tab 的 aria-controls 都有落点，
             id/labelledby 与 TabBar 同源（tabs.tsx）不会写岔 */}
@@ -107,7 +121,7 @@ export function AugmentTable({ hero, className = '' }: { hero: HeroDetail; class
               key={key}
               {...tabPanelProps('hero-augments', key)}
               hidden={key !== rarity}
-              className="flex min-h-0 flex-1 flex-col"
+              className="flex flex-col"
             >
               {rows.length === 0 ? (
                 <p className="px-1.5 py-3 text-xs text-muted">该稀有度下暂无数据。</p>

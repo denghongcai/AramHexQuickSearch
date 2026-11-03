@@ -101,7 +101,7 @@ export function BuildPanel({ builds, className = '' }: { builds: HeroBuild[] | n
             key={build.key}
             {...tabPanelProps('hero-builds', build.key)}
             hidden={build.key !== active.key}
-            className="min-h-0 flex-1 space-y-2.5 overflow-y-auto"
+            className="space-y-2.5"
           >
             <dl className="grid grid-cols-3 gap-2 rounded-lg bg-ink px-3 py-2 text-sm lg:text-base">
               <div>
