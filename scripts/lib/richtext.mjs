@@ -40,6 +40,8 @@ export function richTextSegments(s) {
   const segs = []
   let buf = ''
   let hl = false
+  /** 被动名闭合后置位：吞掉紧随的一个 <br>（避免叠出空行） */
+  let swallowBreak = false
   const flush = () => {
     const lines = buf
       .replace(/[ \t]+/g, ' ')
@@ -55,11 +57,17 @@ export function richTextSegments(s) {
     const m = tk.match(/^<(\/?)([a-zA-Z][a-zA-Z0-9]*)/)
     if (!m) {
       buf += tk.replace(/@[A-Za-z_][A-Za-z0-9_]*@/g, '')
+      swallowBreak = false
       continue
     }
     const closing = m[1] === '/'
     const tag = m[2].toLowerCase()
     if (tag === 'br') {
+      // 被动名闭合后的紧随 <br> 吞掉（其闭合已自带换行，否则会叠出空行）
+      if (swallowBreak) {
+        swallowBreak = false
+        continue
+      }
       buf += '\n'
       continue
     }
@@ -76,11 +84,13 @@ export function richTextSegments(s) {
       flush()
       hl = false
       buf = '\n'
+      swallowBreak = true
       continue
     }
     // 行内样式标签开/闭：闭侧先把已积累文本按当前 hl 落段，再翻转状态
     flush()
     hl = !closing
+    swallowBreak = false
   }
   flush()
   return segs

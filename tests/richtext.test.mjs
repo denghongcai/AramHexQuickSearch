@@ -46,9 +46,10 @@ describe('richTextSegments（分段解析，hl = 游戏内高亮段）', () => {
   })
 
   it('结构容器（mainText/stats）不产生分段；被动名换行独立成节', () => {
+    // 被动闭合自带的 \n 吞掉紧随的 <br>：名称与描述间不叠空行
     expect(richTextSegments('<mainText><passive>熟能生巧</passive><br>攻击时永久成长。</mainText>')).toEqual([
       { text: '\n熟能生巧', hl: true },
-      { text: '\n\n攻击时永久成长。' },
+      { text: '\n攻击时永久成长。' },
     ])
   })
 
