@@ -126,6 +126,7 @@ export function BuildPanel({ builds, className = '' }: { builds: HeroBuild[] | n
                   name,
                   icon: build.core.icons[i] ?? null,
                   tip: build.core.tips?.[i] ?? null,
+                  price: build.core.prices?.[i] ?? null,
                 }))}
               />
             </Field>
