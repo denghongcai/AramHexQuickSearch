@@ -61,6 +61,26 @@ function EmptyField({ items }: { items: ReadonlyArray<ItemChip> }) {
   return items.length > 0 ? <ItemChips items={items} /> : <p className="text-xs text-muted">—</p>
 }
 
+/** 出门装/推荐装的属性合计行：70攻击力 · 80生命值 · 2.5%全能吸血（值半粗、属性名弱化） */
+function TotalStatsLine({ label, stats }: { label: string; stats: HeroBuild['starterStats'] }) {
+  if (!stats || stats.length === 0) return null
+  return (
+    <p className="rounded-lg bg-ink px-3 py-1.5 text-sm">
+      <span className="text-muted">{label}：</span>
+      {stats.map((s, i) => (
+        <span key={`${s.name}-${s.pct}`} className="font-tnum tabular-nums">
+          {i > 0 && <span className="text-muted"> · </span>}
+          <span className="font-semibold">
+            {s.value}
+            {s.pct && '%'}
+          </span>
+          {s.name}
+        </span>
+      ))}
+    </p>
+  )
+}
+
 /**
  * 出装流派（右栏）：按 build 分 tab（key 作 tab id、name 作标题）。
  * builds 为 null（数据源不可用）时显示一行说明；
@@ -133,9 +153,11 @@ export function BuildPanel({ builds, className = '' }: { builds: HeroBuild[] | n
             <Field label="出门装">
               <EmptyField items={build.starter} />
             </Field>
+            <TotalStatsLine label="出门装合计" stats={build.starterStats} />
             <Field label="推荐装">
               <EmptyField items={build.recommended} />
             </Field>
+            <TotalStatsLine label="推荐装合计" stats={build.recommendedStats} />
             {build.summary && (
               <Field label="玩法">
                 <p className="whitespace-pre-line text-xs leading-relaxed text-muted lg:text-[0.9375rem]">{build.summary}</p>
