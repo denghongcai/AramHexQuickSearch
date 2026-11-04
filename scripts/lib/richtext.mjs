@@ -51,6 +51,7 @@ export function richTextSegments(s) {
       .map((l) => l.trim())
       .join('\n')
       .replace(/\n{2,}/g, '\n\n')
+      .replace(/\n+$/, '\n')
     // 只剔除纯空白；「只含换行符」的 buf 是被动名闭合写入的有意义断行，保留
     // （注意不要用 lines.trim() 判空——纯换行的 buf 会被误删，导致名字与描述粘连）
     if (lines !== '') segs.push(hl ? { text: lines, hl: true } : { text: lines })
