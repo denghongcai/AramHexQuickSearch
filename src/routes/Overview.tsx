@@ -57,7 +57,7 @@ function TopHeroRow({ hero }: { hero: HeroRow }) {
         params={{ id: String(hero.id) }}
         className="flex items-center gap-2 rounded-md px-1.5 py-0.5 text-xs hover:bg-edge/25"
       >
-        <span className="w-5 shrink-0 text-right font-tnum text-[11px] tabular-nums text-muted">
+        <span className="w-5 shrink-0 text-right font-tnum text-[0.6875rem] tabular-nums text-muted">
           {hero.rank}
         </span>
         <img
@@ -70,7 +70,7 @@ function TopHeroRow({ hero }: { hero: HeroRow }) {
         />
         <span className="min-w-0 flex-1 truncate">{hero.name}</span>
         <span
-          className={`grid size-4 shrink-0 place-items-center rounded text-[10px] font-bold text-ink ${
+          className={`grid size-4 shrink-0 place-items-center rounded text-[0.625rem] font-bold text-ink ${
             TIER_BG[hero.tier] ?? 'bg-tier-c'
           }`}
         >
@@ -86,7 +86,7 @@ function TopHeroRow({ hero }: { hero: HeroRow }) {
 function TopAugmentRow({ augment }: { augment: AugmentRow }) {
   return (
     <li className="flex items-center gap-2 px-1.5 py-0.5 text-xs">
-      <span className="w-5 shrink-0 text-right font-tnum text-[11px] tabular-nums text-muted">
+      <span className="w-5 shrink-0 text-right font-tnum text-[0.6875rem] tabular-nums text-muted">
         {augment.rank}
       </span>
       <span
@@ -163,7 +163,7 @@ export function OverviewPage() {
       {/* 2. Tier 分布条（桌面 / 移动端共用组件） */}
       <Panel title="Tier 分布">
         <TierBar heroes={heroes} className="pt-0.5" />
-        <p className="mt-1 truncate text-[11px] text-muted">
+        <p className="mt-1 truncate text-[0.6875rem] text-muted">
           {meta?.tierRule ?? '按胜率分位切档，详见「关于」页'}
         </p>
       </Panel>
@@ -233,7 +233,7 @@ export function OverviewPage() {
               ))}
             </ul>
             {singleFamilyCount > 0 && (
-              <p className="mt-1.5 px-1.5 text-[11px] text-muted">
+              <p className="mt-1.5 px-1.5 text-[0.6875rem] text-muted">
                 另有 {singleFamilyCount} 个单件家族未列入，聚类口径见「关于」页。
               </p>
             )}
