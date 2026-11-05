@@ -1,6 +1,5 @@
 import { useMemo, type ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
-import { GameIcon } from '@/components/GameIcon'
 import { TierBar } from '@/components/TierBar'
 import {
   useAugments,
@@ -15,8 +14,7 @@ import { formatCount } from '@/lib/format'
 import { RARITY_DOT, RARITY_LABEL } from '@/lib/rarity'
 import { TIER_BG } from '@/lib/tier'
 
-/** 面板骨架：圆角描边卡 + 小标题（正常一屏放得下；内容超高时由 main 的 lg 内滚兜底）。
- *  标题层级与 hero/Panel.tsx 同款：移动端紧凑，lg 起放大加粗提色 */
+/** 面板骨架：圆角描边卡 + 小标题（正常一屏放得下；内容超高时由 main 的 lg 内滚兜底） */
 function Panel({
   title,
   aside,
@@ -30,11 +28,9 @@ function Panel({
 }) {
   return (
     <section className={`flex min-h-0 min-w-0 flex-col rounded-xl border border-edge bg-panel p-3 ${className}`}>
-      <h2 className="mb-1.5 flex shrink-0 items-center justify-between gap-2">
-        <span className="truncate text-xs font-semibold text-muted lg:text-xl lg:font-bold lg:text-txt">{title}</span>
-        {aside != null && aside !== false && (
-          <span className="shrink-0 text-xs font-normal text-muted">{aside}</span>
-        )}
+      <h2 className="mb-1.5 flex shrink-0 items-center justify-between gap-2 text-xs font-semibold text-muted">
+        <span className="truncate">{title}</span>
+        {aside}
       </h2>
       <div className="min-h-0 flex-1">{children}</div>
     </section>
@@ -59,9 +55,9 @@ function TopHeroRow({ hero }: { hero: HeroRow }) {
       <Link
         to="/hero/$id"
         params={{ id: String(hero.id) }}
-        className="flex items-center gap-2 rounded-md px-1.5 py-0.5 text-xs hover:bg-edge/25 lg:text-[0.9375rem]"
+        className="flex items-center gap-2 rounded-md px-1.5 py-0.5 text-xs hover:bg-edge/25"
       >
-        <span className="w-5 shrink-0 text-right font-tnum text-[0.6875rem] tabular-nums text-muted">
+        <span className="w-5 shrink-0 text-right font-tnum text-[11px] tabular-nums text-muted">
           {hero.rank}
         </span>
         <img
@@ -74,42 +70,33 @@ function TopHeroRow({ hero }: { hero: HeroRow }) {
         />
         <span className="min-w-0 flex-1 truncate">{hero.name}</span>
         <span
-          className={`grid size-4 shrink-0 place-items-center rounded text-[0.625rem] font-bold text-ink ${
+          className={`grid size-4 shrink-0 place-items-center rounded text-[10px] font-bold text-ink ${
             TIER_BG[hero.tier] ?? 'bg-tier-c'
           }`}
         >
           {hero.tier}
         </span>
-        <span className="w-12 shrink-0 text-right font-tnum font-semibold tabular-nums">{hero.winRate}%</span>
+        <span className="w-10 shrink-0 text-right font-tnum tabular-nums">{hero.winRate}%</span>
       </Link>
     </li>
   )
 }
 
-/** Top10 海克斯迷你榜行：rank/游戏图标/名称/胜率/场次（缺图回落稀有度色点） */
+/** Top10 海克斯迷你榜行：rank/名称/稀有度色点/胜率/场次 */
 function TopAugmentRow({ augment }: { augment: AugmentRow }) {
-  const rarityLabel = RARITY_LABEL[augment.rarity] ?? augment.rarity
   return (
-    <li className="flex items-center gap-2 px-1.5 py-0.5 text-xs lg:text-[0.9375rem]">
-      <span className="w-5 shrink-0 text-right font-tnum text-[0.6875rem] tabular-nums text-muted">
+    <li className="flex items-center gap-2 px-1.5 py-0.5 text-xs">
+      <span className="w-5 shrink-0 text-right font-tnum text-[11px] tabular-nums text-muted">
         {augment.rank}
       </span>
-      <GameIcon
-        src={augment.icon}
-        size={20}
-        rounded="rounded-md"
-        title={rarityLabel}
-        fallback={
-          <span
-            title={rarityLabel}
-            aria-label={rarityLabel}
-            className={`size-2 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`}
-          />
-        }
+      <span
+        title={RARITY_LABEL[augment.rarity] ?? augment.rarity}
+        aria-label={RARITY_LABEL[augment.rarity] ?? augment.rarity}
+        className={`size-2 shrink-0 rounded-full ${RARITY_DOT[augment.rarity]}`}
       />
       <span className="min-w-0 flex-1 truncate">{augment.name}</span>
-      <span className="w-14 shrink-0 text-right font-tnum font-semibold tabular-nums">{augment.winRate}%</span>
-      <span className="w-20 shrink-0 pr-1 text-right font-tnum tabular-nums whitespace-nowrap text-muted">
+      <span className="w-11 shrink-0 text-right font-tnum tabular-nums">{augment.winRate}%</span>
+      <span className="w-14 shrink-0 text-right font-tnum tabular-nums whitespace-nowrap text-muted">
         {formatCount(augment.games)}
       </span>
     </li>
@@ -128,8 +115,8 @@ export function OverviewPage() {
 
   const meta = metaQ.data
   const heroes = heroesQ.data?.heroes ?? []
-  const topHeroes = heroes.slice(0, 25)
-  const topAugments = augmentsQ.data?.augments.slice(0, 25) ?? []
+  const topHeroes = heroes.slice(0, 20)
+  const topAugments = augmentsQ.data?.augments.slice(0, 20) ?? []
 
   // 只渲染多件家族（items.length ≥ 2，Task 6 实测注记）。multiFamilies 是过滤后全量
   // （footnote 计数口径），展示取 buildCount 降序前 8——未来多件家族超过 8 个时，
@@ -143,95 +130,47 @@ export function OverviewPage() {
   const singleFamilyCount = families.length - multiFamilies.length
 
   return (
-    <section className="grid items-start gap-3 p-3 lg:h-full lg:grid-cols-3 lg:grid-rows-[minmax(0,1fr)]">
-      {/* 第一列：meta 紧凑条 + Tier 分布 + 流派家族（纵向） */}
-      <div className="flex min-h-0 flex-col gap-3">
-        <Panel title="数据集">
-          {meta ? (
-            <dl className="flex flex-wrap items-baseline gap-x-4 gap-y-1 pt-0.5 text-xs lg:text-sm">
-              <div className="flex items-baseline gap-1">
-                <dt className="text-muted">版本</dt>
-                <dd className="font-tnum font-semibold tabular-nums text-accent">Patch {meta.patch}</dd>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <dt className="text-muted">快照</dt>
-                <dd className="font-tnum tabular-nums">{meta.snapshotAt.slice(0, 10)}</dd>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <dt className="text-muted">有效对局</dt>
-                <dd className="font-tnum tabular-nums">{formatCount(meta.gamesValid)}场</dd>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <dt className="text-muted">英雄</dt>
-                <dd className="font-tnum tabular-nums">{meta.heroCount} 名</dd>
-              </div>
-            </dl>
-          ) : (
-            <PendingRows rows={2} />
-          )}
-        </Panel>
-        <Panel title="Tier 分布">
-          <TierBar heroes={heroes} className="pt-0.5" />
-          <p className="mt-1 truncate text-[0.6875rem] text-muted">
-            {meta?.tierRule ?? '按胜率分位切档，详见「关于」页'}
-          </p>
-        </Panel>
-        <Panel
-          title="流派家族 · 多件组合"
-          aside={<span className="shrink-0 font-normal">核心位聚类 · 套数 = 覆盖出装数</span>}
-          className="min-h-0 flex-1"
-        >
-          {familiesQ.isPending ? (
-            <PendingRows rows={6} />
-          ) : familiesQ.isError ? (
-            <p className="px-1.5 py-2 text-xs text-tier-d">家族数据加载失败，请刷新重试。</p>
-          ) : multiTop.length === 0 ? (
-            <p className="px-1.5 py-2 text-xs text-muted">本版本没有聚出多件家族。</p>
-          ) : (
-            <>
-              <ul className="space-y-0.5">
-                {multiTop.map((family: ItemFamily) => (
-                  <li
-                    key={family.id}
-                    className="flex items-center gap-2 border-b border-edge/40 px-1.5 py-1 text-xs last:border-b-0 lg:text-[0.9375rem]"
-                  >
-                    {/* 家族成员小图标（16px）+ 名称；icons 与 names 平行、查无兜底 null */}
-                    <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                      {family.names.slice(0, 3).map((name, i) => (
-                        <span key={`${family.id}-${i}`} className="flex min-w-0 items-center gap-1">
-                          {i > 0 && (
-                            <span aria-hidden="true" className="shrink-0 text-muted">
-                              +
-                            </span>
-                          )}
-                          <GameIcon src={family.icons[i] ?? null} size={16} rounded="rounded-sm" />
-                          <span className="truncate" title={name}>
-                            {name}
-                          </span>
-                        </span>
-                      ))}
-                    </div>
-                    <span className="shrink-0 text-muted">{family.items.length} 件</span>
-                    <span className="w-14 shrink-0 text-right font-tnum tabular-nums text-muted">
-                      {family.buildCount} 套
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              {singleFamilyCount > 0 && (
-                <p className="mt-1.5 px-1.5 text-[0.6875rem] text-muted">
-                  另有 {singleFamilyCount} 个单件家族未列入，聚类口径见「关于」页。
-                </p>
-              )}
-            </>
-          )}
-        </Panel>
-      </div>
+    <section className="grid gap-3 p-3 lg:h-full lg:grid-cols-2 lg:grid-rows-[auto_auto_minmax(0,1fr)]">
+      {/* 1. meta 卡 */}
+      <Panel title="数据集">
+        {meta ? (
+          <dl className="grid grid-cols-2 gap-x-3 gap-y-2 pt-0.5 text-xs">
+            <div>
+              <dt className="text-muted">版本</dt>
+              <dd className="mt-0.5 font-tnum font-semibold tabular-nums text-accent">
+                Patch {meta.patch}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted">快照日期</dt>
+              <dd className="mt-0.5 font-tnum tabular-nums">{meta.snapshotAt.slice(0, 10)}</dd>
+            </div>
+            <div>
+              <dt className="text-muted">有效对局</dt>
+              <dd className="mt-0.5 font-tnum tabular-nums">{formatCount(meta.gamesValid)}场</dd>
+            </div>
+            <div>
+              <dt className="text-muted">英雄</dt>
+              <dd className="mt-0.5 font-tnum tabular-nums">{meta.heroCount} 名</dd>
+            </div>
+          </dl>
+        ) : (
+          <PendingRows rows={2} />
+        )}
+      </Panel>
 
-      {/* 第二列：Top15 英雄迷你榜（行点击 → /hero/$id） */}
-      <Panel title="英雄胜率 Top25">
+      {/* 2. Tier 分布条（桌面 / 移动端共用组件） */}
+      <Panel title="Tier 分布">
+        <TierBar heroes={heroes} className="pt-0.5" />
+        <p className="mt-1 truncate text-[11px] text-muted">
+          {meta?.tierRule ?? '按胜率分位切档，详见「关于」页'}
+        </p>
+      </Panel>
+
+      {/* 3. Top10 英雄迷你榜（行点击 → /hero/$id） */}
+      <Panel title="英雄胜率 Top20">
         {heroesQ.isPending ? (
-          <PendingRows rows={25} />
+          <PendingRows rows={20} />
         ) : heroesQ.isError ? (
           <p className="px-1.5 py-2 text-xs text-tier-d">英雄榜加载失败，请刷新重试。</p>
         ) : (
@@ -243,16 +182,16 @@ export function OverviewPage() {
         )}
       </Panel>
 
-      {/* 第三列：Top15 海克斯迷你榜（标题 → /augments） */}
+      {/* 4. Top10 海克斯迷你榜（标题 → /augments） */}
       <Panel
         title={
           <Link to="/augments" className="hover:text-accent">
-            海克斯胜率 Top25
+            海克斯胜率 Top20
           </Link>
         }
       >
         {augmentsQ.isPending ? (
-          <PendingRows rows={25} />
+          <PendingRows rows={20} />
         ) : augmentsQ.isError ? (
           <p className="px-1.5 py-2 text-xs text-tier-d">海克斯榜加载失败，请刷新重试。</p>
         ) : (
@@ -261,6 +200,43 @@ export function OverviewPage() {
               <TopAugmentRow key={augment.id} augment={augment} />
             ))}
           </ul>
+        )}
+      </Panel>
+
+      {/* 5. 流派家族概览（只渲染多件家族，占满第三行） */}
+      <Panel
+        title="流派家族 · 多件组合"
+        aside={<span className="shrink-0 font-normal">核心位聚类 · 套数 = 覆盖出装数</span>}
+        className="lg:col-span-2"
+      >
+        {familiesQ.isPending ? (
+          <PendingRows rows={5} />
+        ) : familiesQ.isError ? (
+          <p className="px-1.5 py-2 text-xs text-tier-d">家族数据加载失败，请刷新重试。</p>
+        ) : multiTop.length === 0 ? (
+          <p className="px-1.5 py-2 text-xs text-muted">本版本没有聚出多件家族。</p>
+        ) : (
+          <>
+            <ul>
+              {multiTop.map((family: ItemFamily) => (
+                <li
+                  key={family.id}
+                  className="flex items-center gap-2 border-b border-edge/40 px-1.5 py-0.5 text-xs last:border-b-0"
+                >
+                  <span className="min-w-0 flex-1 truncate">{family.names.slice(0, 3).join(' + ')}</span>
+                  <span className="shrink-0 text-muted">{family.items.length} 件</span>
+                  <span className="w-14 shrink-0 text-right font-tnum tabular-nums text-muted">
+                    {family.buildCount} 套
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {singleFamilyCount > 0 && (
+              <p className="mt-1.5 px-1.5 text-[11px] text-muted">
+                另有 {singleFamilyCount} 个单件家族未列入，聚类口径见「关于」页。
+              </p>
+            )}
+          </>
         )}
       </Panel>
     </section>
